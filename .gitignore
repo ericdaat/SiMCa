@@ -1,0 +1,8 @@
+data
+paper
+venv
+.ipynb_checkpoints
+.DS_Store
+*.pkl
+*.pyc
+.vscode

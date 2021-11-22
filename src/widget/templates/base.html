@@ -1,0 +1,49 @@
+
+<head>
+    <!doctype html>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+    <!-- Mathjax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <title>Geo2Vec</title>
+</head>
+
+<!-- Header -->
+<div class="container-fluid mb-5">
+    <nav class="navbar navbar-light bg-white navbar-expand-sm border-bottom mb-5">
+        <a class="navbar-brand" href="{{ url_for('home.index') }}">
+            Geo2Vec
+        </a>
+    </nav>
+</div>
+
+<!-- Body -->
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12">
+        {% block body %}{% endblock %}
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="container-fluid mt-5">
+    <footer div class="bg-white border-top">
+        <div class="row text-center mt-3">
+            <div class="col">
+                <p>Geo2Vec</p>
+            </div>
+        </div>
+    </footer>
+</div>
