@@ -54,7 +54,8 @@ def format_training_results_in_dataframes(y_pred, capacities, e_usage,
         dict(
             epoch=["{0}".format(i) for i in np.arange(1, len(losses)+1)],
             acc=[s[0] for s in scores],
-            f1=[s[1] for s in scores]
+            f1=[s[1] for s in scores],
+            distances=[s[2] for s in scores]
         )
     )
 
@@ -62,7 +63,7 @@ def format_training_results_in_dataframes(y_pred, capacities, e_usage,
 
 
 def train_model(users_tensor, pois_tensor, D_tensor, y_true, pois_capacities,
-                lr, epsilon, n_iter, alpha, n_epochs, n_features,
+                items_features, lr, epsilon, n_iter, alpha, n_epochs, n_features,
                 users_features=None, train_user_embeddings=False, assign="lap"):
 
     if users_features is not None:
@@ -122,7 +123,14 @@ def train_model(users_tensor, pois_tensor, D_tensor, y_true, pois_capacities,
         losses.append([loss.item()])
         acc = accuracy_score(y_true=y_true, y_pred=y_pred)
         f1 = f1_score(y_true=y_true, y_pred=y_pred, average="macro")
-        scores.append([acc, f1])
+
+        embedding_distance = np.linalg.norm(
+            model.poi_embeddings.weight.data.numpy()
+            - items_features,
+            axis=1
+        )
+
+        scores.append([acc, f1, np.mean(embedding_distance)])
 
     ##########
     # Scores #

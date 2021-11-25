@@ -61,6 +61,7 @@ def test_train(epsilon, alpha, n_pois, n_users, n_centers,
         toy.D_tensor,
         toy.y_true_tensor,
         toy.pois_capacities,
+        toy.pois_features,
         n_features=n_features,
         lr=0.01,
         epsilon=epsilon,
@@ -80,7 +81,7 @@ def test_train(epsilon, alpha, n_pois, n_users, n_centers,
     assert losses_df.columns.tolist() == ["epoch", "loss"]
 
     assert isinstance(scores_df, pd.DataFrame)
-    assert scores_df.columns.tolist() == ["epoch", "acc", "f1"]
+    assert scores_df.columns.tolist() == ["epoch", "acc", "f1", "distances"]
 
     assert isinstance(capacities_df, pd.DataFrame)
     assert capacities_df.columns.tolist() == ["center_id", "capacities",

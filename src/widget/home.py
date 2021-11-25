@@ -74,6 +74,7 @@ def index():
             D_tensor=toy.D_tensor,
             y_true=toy.y_true_tensor,
             pois_capacities=toy.pois_capacities,
+            items_features=toy.pois_features,
             n_features=2,
             lr=lr,
             epsilon=epsilon,
