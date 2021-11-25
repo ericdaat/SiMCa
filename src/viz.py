@@ -43,12 +43,12 @@ def plot_scores(scores_df, ax):
 
 
 def plot_embeddings(users_features,
-                    pois_features,
-                    pois_capacities,
+                    items_features,
+                    items_capacities,
                     y_pred, ax):
     # Normalize
-    pois_features =nn.functional.normalize(
-        pois_features,
+    items_features =nn.functional.normalize(
+        items_features,
         dim=1
     ).data.numpy()
 
@@ -73,10 +73,10 @@ def plot_embeddings(users_features,
     )
 
     ax.scatter(
-        x=pois_features[:, 0],
-        y=pois_features[:, 1],
-        c=CENTERS_COLORS[:pois_capacities.shape[1]],
-        s=pois_capacities,
+        x=items_features[:, 0],
+        y=items_features[:, 1],
+        c=CENTERS_COLORS[:items_capacities.shape[1]],
+        s=items_capacities,
         alpha=.7,
         marker="o",
         edgecolors="black"
@@ -94,8 +94,8 @@ def plot_embeddings(users_features,
     ax.axis("off")
 
 
-def plot_distances(users_xy, pois_xy, radius, y_pred,
-                   pois_capacities, ax):
+def plot_distances(users_xy, items_xy, radius, y_pred,
+                   items_capacities, ax):
     # Draw base circle
     theta = np.linspace(0, 2*np.pi, 100)
     x1 = np.cos(theta) * radius
@@ -104,12 +104,12 @@ def plot_distances(users_xy, pois_xy, radius, y_pred,
 
     # Draw "care centers"
     ax.scatter(
-        pois_xy[:, 0],
-        pois_xy[:, 1],
-        s=2*pois_capacities,
+        items_xy[:, 0],
+        items_xy[:, 1],
+        s=2*items_capacities,
         alpha=.7,
         label="care center",
-        c=CENTERS_COLORS[:pois_capacities.shape[1]],
+        c=CENTERS_COLORS[:items_capacities.shape[1]],
         edgecolors="black"
     )
 
@@ -130,8 +130,8 @@ def plot_distances(users_xy, pois_xy, radius, y_pred,
     # if y_pred is not None:
     #     for i, j in enumerate(y_pred):
     #         ax.plot(
-    #             [users_xy[i, 0], pois_xy[j, 0]],
-    #             [users_xy[i, 1], pois_xy[j, 1]],
+    #             [users_xy[i, 0], items_xy[j, 0]],
+    #             [users_xy[i, 1], items_xy[j, 1]],
     #             color=CENTERS_COLORS[j],
     #             linewidth=.3,
     #             zorder=-1,
@@ -142,7 +142,7 @@ def plot_distances(users_xy, pois_xy, radius, y_pred,
     ax.axis("off")
 
 
-def plot_heatmap(y_true, y_pred, n_pois, ax):
+def plot_heatmap(y_true, y_pred, n_items, ax):
     m = confusion_matrix(
         y_true=y_true,
         y_pred=y_pred
@@ -150,9 +150,9 @@ def plot_heatmap(y_true, y_pred, n_pois, ax):
 
     sns.heatmap(m,
                 xticklabels=["Item {0}".format(i)
-                             for i in range(1, n_pois+1)],
+                             for i in range(1, n_items+1)],
                 yticklabels=["Item {0}".format(i)
-                             for i in range(1, n_pois+1)],
+                             for i in range(1, n_items+1)],
                 annot=True,
                 cmap="YlGnBu",
                 fmt=".0f",

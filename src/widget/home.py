@@ -17,7 +17,7 @@ bp = Blueprint("home", __name__)
 
 toy = ToyDataset(
     n_users=1000,
-    n_pois=3,
+    n_items=3,
     n_centers=3,
     n_features=2,
     distance_weight=0
@@ -27,7 +27,7 @@ toy = ToyDataset(
 def index():
     # dataset parameters
     n_users = request.args.get("n_users", default=1000, type=int)
-    n_pois = request.args.get("n_pois", default=3, type=int)
+    n_items = request.args.get("n_items", default=3, type=int)
     n_centers = request.args.get("n_centers", default=3, type=int)
     distance_weight = request.args.get("distance_weight", default=0, type=float)
     generate = request.args.get("generate", default=False, type=bool)
@@ -45,12 +45,12 @@ def index():
     # Generate dataset #
     ####################
     # if generation is asked or if dataset parameters changed
-    if (generate or n_users!=toy.n_users or n_pois!=toy.n_pois
+    if (generate or n_users!=toy.n_users or n_items!=toy.n_items
         or n_centers!=toy.n_centers or distance_weight!=toy.distance_weight):
         logging.info("Drawing a new dataset")
         toy.update_dataset(
             n_users=n_users,
-            n_pois=n_pois,
+            n_items=n_items,
             n_centers=n_centers,
             n_features=2,
             distance_weight=distance_weight
@@ -70,11 +70,11 @@ def index():
     (y_pred, model, losses_df, scores_df, capacities_df) \
         = train.train_model(
             users_tensor=toy.users_tensor,
-            pois_tensor=toy.pois_tensor,
+            items_tensor=toy.items_tensor,
             D_tensor=toy.D_tensor,
             y_true_tensor=toy.y_true_tensor,
-            pois_capacities=toy.pois_capacities,
-            items_features=toy.pois_features,
+            items_capacities=toy.items_capacities,
+            items_features=toy.items_features,
             n_features=2,
             lr=lr,
             epsilon=epsilon,
@@ -95,18 +95,18 @@ def index():
     # Ground truth
     viz.plot_embeddings(
         users_features=torch.from_numpy(toy.users_features),
-        pois_features=torch.from_numpy(toy.pois_features),
-        pois_capacities=toy.pois_capacities,
-        y_pred=toy.assigned_poi_for_user,
+        items_features=torch.from_numpy(toy.items_features),
+        items_capacities=toy.items_capacities,
+        y_pred=toy.assigned_item_for_user,
         ax=axs[0]
     )
 
     viz.plot_distances(
         np.asarray(list(zip(toy.users_x, toy.users_y))),
-        np.asarray(list(zip(toy.pois_x, toy.pois_y))),
+        np.asarray(list(zip(toy.items_x, toy.items_y))),
         CIRCLE_RADIUS,
-        toy.assigned_poi_for_user,
-        toy.pois_capacities,
+        toy.assigned_item_for_user,
+        toy.items_capacities,
         axs[1]
     )
 
@@ -126,18 +126,18 @@ def index():
     # Predictions
     viz.plot_embeddings(
         users_features=model.user_embeddings.weight,
-        pois_features=model.poi_embeddings.weight,
-        pois_capacities=toy.pois_capacities,
+        items_features=model.item_embeddings.weight,
+        items_capacities=toy.items_capacities,
         y_pred=y_pred,
         ax=axs[0]
     )
 
     viz.plot_distances(
         np.asarray(list(zip(toy.users_x, toy.users_y))),
-        np.asarray(list(zip(toy.pois_x, toy.pois_y))),
+        np.asarray(list(zip(toy.items_x, toy.items_y))),
         CIRCLE_RADIUS,
         y_pred,
-        toy.pois_capacities,
+        toy.items_capacities,
         axs[1]
     )
 
@@ -157,7 +157,7 @@ def index():
     viz.plot_scores(scores_df, axs[0][0])
     viz.plot_losses(losses_df, axs[0][1])
     viz.plot_capacities(capacities_df, axs[1][0])
-    viz.plot_heatmap(toy.y_true_tensor, y_pred, n_pois, axs[1][1])
+    viz.plot_heatmap(toy.y_true_tensor, y_pred, n_items, axs[1][1])
 
     fig3.tight_layout()
 
@@ -173,5 +173,5 @@ def index():
         fig1_data=fig1_data,
         fig2_data=fig2_data,
         fig3_data=fig3_data,
-        pois_colors=viz.CENTERS_COLORS[:n_pois]
+        items_colors=viz.CENTERS_COLORS[:n_items]
     )

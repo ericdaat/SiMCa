@@ -7,25 +7,25 @@ from sklearn.metrics import accuracy_score, f1_score
 from src.ml.model import ModelOT
 
 
-def assign_with_lap(r_ij, pois_capacities):
+def assign_with_lap(r_ij, items_capacities):
     """Perform the final assignation with LAP, using
     the allocation matrix as a cost function.
 
     Args:
         r_ij (torch.FloatTensor): allocation matrix
-        pois_capacities (torch.FloatTensor): items capacities
+        items_capacities (torch.FloatTensor): items capacities
 
     Returns:
         torch.LongTensor: LAP assignations
     """
     r_ij_with_capacities = np.hstack(
         [np.repeat(r_ij.data.numpy()[:, i].reshape(-1, 1), c, axis=1)
-        for i, c in enumerate(pois_capacities[0])]
+        for i, c in enumerate(items_capacities[0])]
     )
 
-    column_to_poi_ix = np.hstack(
+    column_to_item_ix = np.hstack(
         [np.repeat([i], c)
-        for i, c in enumerate(pois_capacities[0])]
+        for i, c in enumerate(items_capacities[0])]
     )
 
     _, col_ix = scipy.optimize.linear_sum_assignment(
@@ -33,7 +33,7 @@ def assign_with_lap(r_ij, pois_capacities):
         maximize=True
     )
 
-    y_pred = np.asarray([column_to_poi_ix[i] for i in col_ix])
+    y_pred = np.asarray([column_to_item_ix[i] for i in col_ix])
 
     return torch.from_numpy(y_pred)
 
@@ -84,17 +84,17 @@ def format_training_results_in_dataframes(y_pred, capacities, e_usage,
     return capacities_df, losses_df, scores_df
 
 
-def train_model(users_tensor, pois_tensor, D_tensor, y_true_tensor, pois_capacities,
+def train_model(users_tensor, items_tensor, D_tensor, y_true_tensor, items_capacities,
                 items_features, lr, epsilon, n_iter, alpha, n_epochs, n_features,
                 users_features=None, train_user_embeddings=False, assign="lap"):
     """Define and train the model.
 
     Args:
         users_tensor (torch.LongTensor): users ids
-        pois_tensor (torch.LongTensor): items ids
+        items_tensor (torch.LongTensor): items ids
         D_tensor (torch.FloatTensor): travel distance matrix
         y_true_tensor (torch.LongTensor): observed allocations
-        pois_capacities (torch.FloatTensor): items capacities
+        items_capacities (torch.FloatTensor): items capacities
         items_features (torch.FloatTensor): items features
         lr (float): Learning rate
         epsilon (float]: Entropy regularization parameter
@@ -114,7 +114,7 @@ def train_model(users_tensor, pois_tensor, D_tensor, y_true_tensor, pois_capacit
         users_features = torch.FloatTensor(users_features)
 
     model = ModelOT(
-        capacities=pois_capacities,
+        capacities=items_capacities,
         epsilon=epsilon,
         alpha=alpha,
         n_iter=n_iter,
@@ -142,14 +142,14 @@ def train_model(users_tensor, pois_tensor, D_tensor, y_true_tensor, pois_capacit
         optimizer.zero_grad()
 
         # model out
-        r_ij = model(users_tensor, pois_tensor, D_tensor)
+        r_ij = model(users_tensor, items_tensor, D_tensor)
         e_usage = r_ij.sum(axis=0)
 
         # predictions
         if assign=="argmax":
             y_pred = torch.argmax(r_ij, axis=1)
         else:
-            y_pred = assign_with_lap(r_ij, pois_capacities)
+            y_pred = assign_with_lap(r_ij, items_capacities)
 
         # loss function
         nll_loss = criterion(torch.log(r_ij), y_true_tensor)
@@ -167,7 +167,7 @@ def train_model(users_tensor, pois_tensor, D_tensor, y_true_tensor, pois_capacit
         f1 = f1_score(y_true=y_true_tensor, y_pred=y_pred, average="macro")
 
         embedding_distance = np.linalg.norm(
-            model.poi_embeddings.weight.data.numpy()
+            model.item_embeddings.weight.data.numpy()
             - items_features,
             axis=1
         )
@@ -179,7 +179,7 @@ def train_model(users_tensor, pois_tensor, D_tensor, y_true_tensor, pois_capacit
     ##########
     capacities_df, losses_df, scores_df = \
         format_training_results_in_dataframes(
-            y_pred, pois_capacities, e_usage,
+            y_pred, items_capacities, e_usage,
             losses, scores
         )
 

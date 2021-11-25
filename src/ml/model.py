@@ -13,7 +13,7 @@ class ModelOT(torch.nn.Module):
         self.alpha = alpha
         self.n_iter = n_iter
 
-        self.poi_embeddings = ScaledEmbedding(
+        self.item_embeddings = ScaledEmbedding(
             num_embeddings=capacities.shape[1],
             embedding_dim=n_features,
         )
@@ -25,12 +25,12 @@ class ModelOT(torch.nn.Module):
         )
         self.user_embeddings.weight.requires_grad = train_user_embeddings
 
-    def forward(self, users_tensor, pois_tensor, D_tensor):
+    def forward(self, users_tensor, items_tensor, D_tensor):
         """Run the forward pass
 
         Args:
             users_tensor (torch.LongTensor): User ids
-            pois_tensor (torch.LongTensor): Item ids
+            items_tensor (torch.LongTensor): Item ids
             D_tensor (torch.FloatTensor): Travel distance matrix
 
         Returns:
@@ -39,16 +39,16 @@ class ModelOT(torch.nn.Module):
 
         # Size variables
         batch_size = users_tensor.shape[0]
-        n_candidates = pois_tensor.shape[1]
+        n_candidates = items_tensor.shape[1]
         n_users = self.user_embeddings.weight.shape[0]
 
         # Embedding lookup
-        poi_embeddings = self.poi_embeddings(pois_tensor)
+        item_embeddings = self.item_embeddings(items_tensor)
         user_embeddings = self.user_embeddings(users_tensor)
 
         # Dot products
         dot_products = torch.bmm(
-            poi_embeddings,
+            item_embeddings,
             user_embeddings.view(batch_size, user_embeddings.shape[1], 1)
         )
         dot_products = dot_products.view(batch_size, n_candidates)
