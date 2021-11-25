@@ -19,8 +19,8 @@ toy = ToyDataset(
     n_users=1000,
     n_pois=3,
     n_centers=3,
-    distance_weight=0,
-    noise=0
+    n_features=2,
+    distance_weight=0
 )
 
 @bp.route("/")
@@ -30,7 +30,6 @@ def index():
     n_pois = request.args.get("n_pois", default=3, type=int)
     n_centers = request.args.get("n_centers", default=3, type=int)
     distance_weight = request.args.get("distance_weight", default=0, type=float)
-    noise = request.args.get("noise", default=0, type=float)
     generate = request.args.get("generate", default=False, type=bool)
 
     # model parameters
@@ -47,16 +46,19 @@ def index():
     ####################
     # if generation is asked or if dataset parameters changed
     if (generate or n_users!=toy.n_users or n_pois!=toy.n_pois
-        or n_centers!=toy.n_centers or distance_weight!=toy.distance_weight
-        or noise!=toy.noise):
+        or n_centers!=toy.n_centers or distance_weight!=toy.distance_weight):
         logging.info("Drawing a new dataset")
-        toy.update_dataset(n_users, n_pois, n_centers, distance_weight)
-        toy.noise_dataset(noise)
+        toy.update_dataset(
+            n_users=n_users,
+            n_pois=n_pois,
+            n_centers=n_centers,
+            n_features=2,
+            distance_weight=distance_weight
+        )
 
     ###############
     # Train model #
     ###############
-    users_tensor, pois_tensor, D_tensor, y_true = train.prepare_input_data(toy)
 
     if user_embeddings == "learn":
         users_features = None
@@ -67,11 +69,12 @@ def index():
 
     (y_pred, model, losses_df, scores_df, capacities_df) \
         = train.train_model(
-            users_tensor=users_tensor,
-            pois_tensor=pois_tensor,
-            D_tensor=D_tensor,
-            y_true=y_true,
+            users_tensor=toy.users_tensor,
+            pois_tensor=toy.pois_tensor,
+            D_tensor=toy.D_tensor,
+            y_true=toy.y_true_tensor,
             pois_capacities=toy.pois_capacities,
+            n_features=2,
             lr=lr,
             epsilon=epsilon,
             n_iter=n_iter,
@@ -153,7 +156,7 @@ def index():
     viz.plot_scores(scores_df, axs[0][0])
     viz.plot_losses(losses_df, axs[0][1])
     viz.plot_capacities(capacities_df, axs[1][0])
-    viz.plot_heatmap(y_true, y_pred, n_pois, axs[1][1])
+    viz.plot_heatmap(toy.y_true_tensor, y_pred, n_pois, axs[1][1])
 
     fig3.tight_layout()
 

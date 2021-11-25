@@ -7,22 +7,6 @@ from sklearn.metrics import accuracy_score, f1_score
 from src.ml.model import ModelOT
 
 
-def prepare_input_data(toy):
-    users_tensor = torch.from_numpy(np.arange(0, toy.n_users))
-
-    pois_tensor = torch.from_numpy(
-        np.repeat(np.arange(toy.pois_capacities.shape[1]).reshape(1, -1),
-                toy.users_features.shape[0],
-                axis=0)
-    ).long()
-
-    D_tensor = torch.FloatTensor(toy.D)
-
-    y_true = torch.from_numpy(toy.assigned_poi_for_user).long()
-
-    return users_tensor, pois_tensor, D_tensor, y_true
-
-
 def assign_with_lap(r_ij, pois_capacities):
     r_ij_with_capacities = np.hstack(
         [np.repeat(r_ij.data.numpy()[:, i].reshape(-1, 1), c, axis=1)
@@ -45,7 +29,7 @@ def assign_with_lap(r_ij, pois_capacities):
 
 
 def train_model(users_tensor, pois_tensor, D_tensor, y_true, pois_capacities,
-                lr, epsilon, n_iter, alpha, n_epochs,
+                lr, epsilon, n_iter, alpha, n_epochs, n_features,
                 users_features=None, train_user_embeddings=False, assign="lap"):
 
     if users_features is not None:
@@ -57,6 +41,7 @@ def train_model(users_tensor, pois_tensor, D_tensor, y_true, pois_capacities,
         alpha=alpha,
         n_iter=n_iter,
         n_users=users_tensor.shape[0],
+        n_features=n_features,
         user_embeddings=users_features,
         train_user_embeddings=train_user_embeddings
     )
@@ -93,9 +78,6 @@ def train_model(users_tensor, pois_tensor, D_tensor, y_true, pois_capacities,
         # loss function
         nll_loss = criterion(torch.log(r_ij), y_true)
 
-        # not loss anymore we maximize it!
-        capacity_loss = torch.sum(model.affinity_matrix*r_ij) / users_tensor.shape[0]
-
         loss = nll_loss
         train_epoch_loss += loss.item()
         loss.backward()
@@ -104,7 +86,7 @@ def train_model(users_tensor, pois_tensor, D_tensor, y_true, pois_capacities,
         optimizer.step()
 
         # training stats
-        losses.append([loss.item(), capacity_loss.item()])
+        losses.append([loss.item()])
         acc = accuracy_score(y_true=y_true, y_pred=y_pred)
         f1 = f1_score(y_true=y_true, y_pred=y_pred, average="macro")
         scores.append([acc, f1])
@@ -115,7 +97,7 @@ def train_model(users_tensor, pois_tensor, D_tensor, y_true, pois_capacities,
 
     capacities_df = pd.DataFrame(
         dict(
-            center_id=["POI {0}".format(i) for i in np.arange(1, pois_capacities.shape[1]+1)],
+            center_id=["Item {0}".format(i) for i in np.arange(1, pois_capacities.shape[1]+1)],
             capacities=pois_capacities.reshape(-1),
             expected_usage=e_usage.data.numpy(),
             actual_usage=torch.nn.functional.one_hot(

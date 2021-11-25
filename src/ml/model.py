@@ -4,8 +4,8 @@ from src.ml.layers import ScaledEmbedding
 
 
 class ModelOT(torch.nn.Module):
-    def __init__(self, capacities, n_users, epsilon, alpha, n_iter=10,
-                 embedding_dim=2, user_embeddings=None,
+    def __init__(self, capacities, n_users, epsilon, alpha,
+                 n_features, n_iter=10, user_embeddings=None,
                  train_user_embeddings=False):
         super(ModelOT, self).__init__()
         self.capacities = torch.FloatTensor(capacities)
@@ -15,12 +15,12 @@ class ModelOT(torch.nn.Module):
 
         self.poi_embeddings = ScaledEmbedding(
             num_embeddings=capacities.shape[1],
-            embedding_dim=embedding_dim,
+            embedding_dim=n_features,
         )
 
         self.user_embeddings = ScaledEmbedding(
             num_embeddings=n_users,
-            embedding_dim=embedding_dim,
+            embedding_dim=n_features,
             _weight=user_embeddings
         )
         self.user_embeddings.weight.requires_grad = train_user_embeddings
@@ -29,6 +29,7 @@ class ModelOT(torch.nn.Module):
         # Size variables
         batch_size = users_tensor.shape[0]
         n_candidates = pois_tensor.shape[1]
+        n_users = self.user_embeddings.weight.shape[0]
 
         # Embedding lookup
         poi_embeddings = self.poi_embeddings(pois_tensor)
@@ -51,8 +52,12 @@ class ModelOT(torch.nn.Module):
         K = torch.exp(affinity_matrix / self.epsilon)  # divide affinity matrix by epsilon
                                                        # epsilon: temperature for entropic regularization
                                                        # K is Gibbs kernel: exp(-cost/epsilon)
-        a = torch.ones(batch_size)     # users
-        b = self.capacities.squeeze()  # POIs capacities
+
+        # Scaling factor
+        scaling_factor = batch_size / n_users
+
+        a = torch.ones(batch_size)                      # users
+        b = self.capacities.squeeze() * scaling_factor  # capacities
         v = torch.ones(n_candidates)
 
         # Sinkhorn algorithm: run iterations

@@ -1,9 +1,10 @@
 import torch
 import pytest
+import pandas as pd
 
 from src.dataset.toy import ToyDataset
 from src.ml.model import ModelOT
-from src.ml.train import train_model, prepare_input_data
+from src.ml.train import train_model
 
 
 @pytest.mark.parametrize("epsilon", [0])
@@ -11,21 +12,24 @@ from src.ml.train import train_model, prepare_input_data
 @pytest.mark.parametrize("n_pois", [3])
 @pytest.mark.parametrize("n_users", [1000])
 @pytest.mark.parametrize("n_centers", [3])
+@pytest.mark.parametrize("n_features", [2])
 @pytest.mark.parametrize("distance_weight", [0.5])
-def test_factory(epsilon, alpha, n_pois, n_users, n_centers, distance_weight):
+def test_factory(epsilon, alpha, n_pois, n_users, n_features,
+                 n_centers, distance_weight):
     toy = ToyDataset(
         n_centers=n_centers,
         n_pois=n_pois,
         n_users=n_users,
-        distance_weight=distance_weight,
-        noise=0
+        n_features=n_features,
+        distance_weight=distance_weight
     )
 
     model = ModelOT(
         capacities=toy.pois_capacities,
         n_users=n_users,
         epsilon=epsilon,
-        alpha=alpha
+        alpha=alpha,
+        n_features=n_features
     )
 
     assert isinstance(model, ModelOT)
@@ -33,64 +37,51 @@ def test_factory(epsilon, alpha, n_pois, n_users, n_centers, distance_weight):
     assert model.poi_embeddings.weight.shape == torch.Size([n_pois, 2])
 
 
-@pytest.mark.parametrize("n_pois", [3])
-@pytest.mark.parametrize("n_users", [1000])
-@pytest.mark.parametrize("n_centers", [3])
-@pytest.mark.parametrize("distance_weight", [0.5])
-def test_input_data(n_pois, n_users, n_centers, distance_weight):
-    toy = ToyDataset(
-        n_centers=n_centers,
-        n_pois=n_pois,
-        n_users=n_users,
-        distance_weight=distance_weight,
-        noise=0
-    )
-
-    users_tensor, pois_tensor, D_tensor, y_true = prepare_input_data(toy)
-
-    assert users_tensor.shape == torch.Size([n_users,])
-    assert pois_tensor.shape == torch.Size([n_users, n_pois])
-    assert D_tensor.shape == torch.Size([n_users, n_pois])
-    assert y_true.shape == torch.Size([n_users])
-
-    assert isinstance(users_tensor, torch.LongTensor)
-    assert isinstance(pois_tensor, torch.LongTensor)
-    assert isinstance(D_tensor, torch.FloatTensor)
-    assert isinstance(y_true, torch.LongTensor)
-
-
-@pytest.mark.parametrize("epsilon", [0])
+@pytest.mark.parametrize("epsilon", [0.1])
 @pytest.mark.parametrize("alpha", [0])
 @pytest.mark.parametrize("n_pois", [3])
 @pytest.mark.parametrize("n_users", [1000])
 @pytest.mark.parametrize("n_centers", [3])
+@pytest.mark.parametrize("n_features", [2, 3])
 @pytest.mark.parametrize("distance_weight", [0.5])
-def test_train(epsilon, alpha, n_pois, n_users, n_centers, distance_weight):
+def test_train(epsilon, alpha, n_pois, n_users, n_centers,
+               n_features, distance_weight):
     toy = ToyDataset(
         n_centers=n_centers,
         n_pois=n_pois,
         n_users=n_users,
-        distance_weight=distance_weight,
-        noise=0
+        n_features=n_features,
+        distance_weight=distance_weight
     )
 
-    # prepare input
-    users_tensor, pois_tensor, D_tensor, y_true = prepare_input_data(toy)
-
     # train the model
-    (y_pred, model, _, _, _) = train_model(
-        users_tensor,
-        pois_tensor,
-        D_tensor,
-        y_true,
+    (y_pred, model, losses_df, scores_df, capacities_df) = train_model(
+        toy.users_tensor,
+        toy.pois_tensor,
+        toy.D_tensor,
+        toy.y_true_tensor,
         toy.pois_capacities,
+        n_features=n_features,
         lr=0.01,
-        epsilon=0.1,
+        epsilon=epsilon,
         n_iter=10,
-        alpha=0,
+        alpha=alpha,
         n_epochs=10,
         users_features=toy.users_features,
-        train_user_embeddings=False
+        train_user_embeddings=False,
+        assign="lap"
     )
 
     assert y_pred.shape == torch.Size([n_users])
+
+    assert isinstance(model, ModelOT)
+
+    assert isinstance(losses_df, pd.DataFrame)
+    assert losses_df.columns.tolist() == ["epoch", "loss"]
+
+    assert isinstance(scores_df, pd.DataFrame)
+    assert scores_df.columns.tolist() == ["epoch", "acc", "f1"]
+
+    assert isinstance(capacities_df, pd.DataFrame)
+    assert capacities_df.columns.tolist() == ["center_id", "capacities",
+                                              "expected_usage", "actual_usage"]

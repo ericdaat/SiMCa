@@ -15,7 +15,7 @@ def plot_capacities(capacities_df, ax):
     diff = (capacities_df["actual_usage"] - capacities_df["capacities"]).values
     overflow = np.where(diff > 0, diff, 0).sum()
     ax.set_title("Capacities (Overflow={0:.0f})".format(overflow))
-    ax.set_xlabel("POI")
+    ax.set_xlabel("Item")
     ax.set_ylabel("Number of users")
 
 
@@ -149,9 +149,9 @@ def plot_heatmap(y_true, y_pred, n_pois, ax):
     )
 
     sns.heatmap(m,
-                xticklabels=["POI {0}".format(i)
+                xticklabels=["Item {0}".format(i)
                              for i in range(1, n_pois+1)],
-                yticklabels=["POI {0}".format(i)
+                yticklabels=["Item {0}".format(i)
                              for i in range(1, n_pois+1)],
                 annot=True,
                 cmap="YlGnBu",

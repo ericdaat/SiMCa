@@ -3,6 +3,7 @@ import pickle
 
 import numpy as np
 import scipy
+import torch
 from sklearn.datasets import make_blobs
 
 from src.utils import compute_distance
@@ -23,13 +24,15 @@ def load_dataset(filepath):
     return toy
 
 class ToyDataset(object):
-    def __init__(self, n_users, n_pois, n_centers, distance_weight, noise):
+    def __init__(self, n_users, n_pois, n_centers, n_features,
+                 distance_weight):
         """Constructor for the toy dataset.
 
         Args:
             n_users (int): Number of generated users
             n_pois (int): Number of generated points of interest
             n_centers (int): Number of clusters of the gaussian mixture model
+            n_features (int): Number of latent dimensions for users and items.
             distance_weight (float): Importance of the distance in the
                 assignment phase.
             noise (float): Percentage of noise to add to the dataset.
@@ -42,7 +45,6 @@ class ToyDataset(object):
         self.n_pois = n_pois
         self.n_centers = n_centers
         self.distance_weight = distance_weight
-        self.noise = noise
 
         # initialize dataset variables
         self.users_x = None
@@ -55,11 +57,25 @@ class ToyDataset(object):
         self.pois_features = None
         self.assigned_poi_for_user = None
 
-        # generate the dataset
-        self.update_dataset(n_users, n_pois, n_centers, distance_weight)
-        self.noise_dataset(noise)
+        # tensors
+        self.users_tensor = None
+        self.pois_tensor = None
+        self.D_tensor = None
+        self.y_true_tensor = None
 
-    def update_dataset(self, n_users, n_pois, n_centers, distance_weight):
+        # generate the dataset
+        self.update_dataset(n_users, n_pois, n_centers,
+                            n_features, distance_weight)
+
+    def __len__(self):
+        return self.n_users
+
+    def __getitem__(self, idx):
+        return (self.users_tensor[idx], self.pois_tensor[idx],
+                self.D_tensor[idx], self.y_true_tensor[idx])
+
+    def update_dataset(self, n_users, n_pois, n_centers,
+                       n_features, distance_weight):
         """Update the dataset by creating new users, new POIs and new
         assignments.
 
@@ -73,14 +89,16 @@ class ToyDataset(object):
         (users_x, users_y, pois_x, pois_y, pois_capacities,
          D, users_features, pois_features,
          assigned_poi_for_user) =\
-                self.__generate(n_users, n_pois,
-                                n_centers, distance_weight)
+                self.__generate(n_users, n_pois, n_centers,
+                                n_features, distance_weight)
 
+        # Update setup variables
         self.n_users = n_users
         self.n_pois = n_pois
         self.n_centers = n_centers
         self.distance_weight = distance_weight
 
+        # Update dataset
         self.users_x = users_x
         self.users_y = users_y
         self.pois_x = pois_x
@@ -90,6 +108,15 @@ class ToyDataset(object):
         self.users_features = users_features
         self.pois_features = pois_features
         self.assigned_poi_for_user = assigned_poi_for_user
+
+        # Convert to tensor
+        (users_tensor, pois_tensor,
+         D_tensor, y_true_tensor) = self.__convert_to_tensors()
+
+        self. users_tensor = users_tensor
+        self. pois_tensor = pois_tensor
+        self. D_tensor = D_tensor
+        self. y_true_tensor = y_true_tensor
 
     def noise_dataset(self, noise_percentage):
         n_permutations = int(noise_percentage * self.n_users)
@@ -121,7 +148,18 @@ class ToyDataset(object):
 
         return new_assigned_poi_for_user
 
-    def __generate(self, n_users, n_pois, n_centers, distance_weight):
+    def add_gaussian_noise_to_users_features(self, ratio, normalize=True):
+        noise = np.random.normal(0, .1, self.users_features.shape)
+
+        users_features = (1-ratio) * self.users_features + ratio * noise
+
+        if normalize:
+            users_features /= np.linalg.norm(users_features, axis=1).reshape(-1, 1)
+
+        return users_features
+
+    def __generate(self, n_users, n_pois, n_centers,
+                   n_features, distance_weight):
         """Generate users, POIs and assignments.
 
         Args:
@@ -146,6 +184,7 @@ class ToyDataset(object):
             n_users,
             n_pois,
             n_centers,
+            n_features=n_features,
             normalize=True
         )
 
@@ -240,7 +279,8 @@ class ToyDataset(object):
 
 
     def __generate_users_and_pois_features(self, n_users, n_pois,
-                                           n_centers, normalize=True):
+                                           n_centers, n_features,
+                                           normalize=True):
         """Generate users and POIs features.
 
         Args:
@@ -255,7 +295,7 @@ class ToyDataset(object):
         """
         X, group = make_blobs(
             n_samples=n_users+n_pois,
-            n_features=2,
+            n_features=n_features,
             centers=n_centers,
             # random_state=10
         )
@@ -323,3 +363,20 @@ class ToyDataset(object):
         )
 
         return assigned_poi_for_user
+
+    def __convert_to_tensors(self):
+        users_tensor = torch.LongTensor(np.arange(0, self.n_users))
+
+        pois_tensor = torch.LongTensor(
+            np.repeat(
+                np.arange(self.pois_capacities.shape[1]).reshape(1, -1),
+                self.users_features.shape[0],
+                axis=0
+            )
+        )
+
+        D_tensor = torch.FloatTensor(self.D)
+
+        y_true_tensor = torch.LongTensor(self.assigned_poi_for_user)
+
+        return users_tensor, pois_tensor, D_tensor, y_true_tensor
