@@ -72,7 +72,7 @@ def index():
             users_tensor=toy.users_tensor,
             pois_tensor=toy.pois_tensor,
             D_tensor=toy.D_tensor,
-            y_true=toy.y_true_tensor,
+            y_true_tensor=toy.y_true_tensor,
             pois_capacities=toy.pois_capacities,
             items_features=toy.pois_features,
             n_features=2,

@@ -118,15 +118,17 @@ class ToyDataset(object):
         self. D_tensor = D_tensor
         self. y_true_tensor = y_true_tensor
 
-    def noise_dataset(self, noise_percentage):
-        n_permutations = int(noise_percentage * self.n_users)
-
-        self.noise = noise_percentage
-        self.assigned_poi_for_user = self.add_random_permutations(
-            n_permutations
-        )
-
     def add_random_permutations(self, n_permutations):
+        """Add random permutations to the allocations, by swapping
+        users two by two.
+
+        Args:
+            n_permutations (int): Number of users to randomly swap
+                with another user.
+
+        Returns:
+            np.array: new assignations
+        """
         new_assigned_poi_for_user = self.assigned_poi_for_user.copy()
 
         users_indices = np.random.choice(
@@ -149,6 +151,16 @@ class ToyDataset(object):
         return new_assigned_poi_for_user
 
     def add_gaussian_noise_to_users_features(self, ratio, normalize=True):
+        """Add gaussian noise to the users features.
+
+        Args:
+            ratio (float): Relative weight of the Gaussian noise, compared
+                to the users features.
+            normalize (bool, optional): Normalize the newly obtained features. Defaults to True.
+
+        Returns:
+            np.ndarray: Noised users features
+        """
         noise = np.random.normal(0, .1, self.users_features.shape)
 
         users_features = (1-ratio) * self.users_features + ratio * noise

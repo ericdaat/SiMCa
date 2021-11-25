@@ -26,6 +26,17 @@ class ModelOT(torch.nn.Module):
         self.user_embeddings.weight.requires_grad = train_user_embeddings
 
     def forward(self, users_tensor, pois_tensor, D_tensor):
+        """Run the forward pass
+
+        Args:
+            users_tensor (torch.LongTensor): User ids
+            pois_tensor (torch.LongTensor): Item ids
+            D_tensor (torch.FloatTensor): Travel distance matrix
+
+        Returns:
+            torch.FloatTensor: Probability allocation matrix
+        """
+
         # Size variables
         batch_size = users_tensor.shape[0]
         n_candidates = pois_tensor.shape[1]
