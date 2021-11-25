@@ -28,6 +28,39 @@ def assign_with_lap(r_ij, pois_capacities):
     return torch.from_numpy(y_pred)
 
 
+def format_training_results_in_dataframes(y_pred, capacities, e_usage,
+                                          losses, scores):
+    capacities_df = pd.DataFrame(
+        dict(
+            center_id=["Item {0}".format(i)
+                       for i in np.arange(1, capacities.shape[1]+1)],
+            capacities=capacities.reshape(-1),
+            expected_usage=e_usage.data.numpy(),
+            actual_usage=torch.nn.functional.one_hot(
+                y_pred,
+                num_classes=capacities.shape[1]
+            ).sum(axis=0).data.numpy()
+        )
+    )
+
+    losses_df = pd.DataFrame(
+        dict(
+            epoch=["{0}".format(i) for i in np.arange(1, len(losses)+1)],
+            loss=[l[0] for l in losses]
+        )
+    )
+
+    scores_df = pd.DataFrame(
+        dict(
+            epoch=["{0}".format(i) for i in np.arange(1, len(losses)+1)],
+            acc=[s[0] for s in scores],
+            f1=[s[1] for s in scores]
+        )
+    )
+
+    return capacities_df, losses_df, scores_df
+
+
 def train_model(users_tensor, pois_tensor, D_tensor, y_true, pois_capacities,
                 lr, epsilon, n_iter, alpha, n_epochs, n_features,
                 users_features=None, train_user_embeddings=False, assign="lap"):
@@ -94,33 +127,11 @@ def train_model(users_tensor, pois_tensor, D_tensor, y_true, pois_capacities,
     ##########
     # Scores #
     ##########
-
-    capacities_df = pd.DataFrame(
-        dict(
-            center_id=["Item {0}".format(i) for i in np.arange(1, pois_capacities.shape[1]+1)],
-            capacities=pois_capacities.reshape(-1),
-            expected_usage=e_usage.data.numpy(),
-            actual_usage=torch.nn.functional.one_hot(
-                y_pred,
-                num_classes=pois_capacities.shape[1]
-            ).sum(axis=0).data.numpy()
+    capacities_df, losses_df, scores_df = \
+        format_training_results_in_dataframes(
+            y_pred, pois_capacities, e_usage,
+            losses, scores
         )
-    )
-
-    losses_df = pd.DataFrame(
-        dict(
-            epoch=["{0}".format(i) for i in np.arange(1, len(losses)+1)],
-            loss=[l[0] for l in losses]
-        )
-    )
-
-    scores_df = pd.DataFrame(
-        dict(
-            epoch=["{0}".format(i) for i in np.arange(1, len(losses)+1)],
-            acc=[s[0] for s in scores],
-            f1=[s[1] for s in scores]
-        )
-    )
 
     return (y_pred, model,
             losses_df, scores_df, capacities_df)
