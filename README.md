@@ -44,8 +44,7 @@ toy = ToyDataset(
     n_features=2, 		# embedding dimension
     n_items=3,    		# number of items
     n_users=1000, 		# number of users
-    distance_weight=0 	# relative importance of the distance
-                          # during the generation
+    distance_weight=0 # relative importance of the distance during the generation
 )
 
 # Persist the dataset to disk, using pickle
