@@ -30,7 +30,7 @@ class ToyDataset(object):
 
         Args:
             n_users (int): Number of generated users
-            n_items (int): Number of generated itemnts of interest
+            n_items (int): Number of generated points of interest
             n_centers (int): Number of clusters of the gaussian mixture model
             n_features (int): Number of latent dimensions for users and items.
             distance_weight (float): Importance of the distance in the
@@ -81,7 +81,7 @@ class ToyDataset(object):
 
         Args:
             n_users (int): Number of generated users
-            n_items (int): Number of generated itemnts of interest
+            n_items (int): Number of generated points of interest
             n_centers (int): Number of clusters of the gaussian mixture model
             distance_weight (float): Importance of the distance in the
                 assignment phase.
@@ -176,7 +176,7 @@ class ToyDataset(object):
 
         Args:
             n_users (int): Number of generated users
-            n_items (int): Number of generated itemnts of interest
+            n_items (int): Number of generated points of interest
             n_centers (int): Number of clusters of the gaussian mixture model
             distance_weight (float): Importance of the distance in the
                 assignment phase.
@@ -220,7 +220,7 @@ class ToyDataset(object):
 
         Args:
             n_users (int): Number of generated users
-            n_items (int): Number of generated itemnts of interest
+            n_items (int): Number of generated points of interest
 
         Returns:
             tuple: Users and items coordinates
@@ -297,7 +297,7 @@ class ToyDataset(object):
 
         Args:
             n_users (int): Number of generated users
-            n_items (int): Number of generated itemnts of interest
+            n_items (int): Number of generated points of interest
             n_centers (int): Number of clusters of the gaussian mixture model
             normalize (bool, optional): Normalize features
                 (each vector has unit norm). Defaults to True.
@@ -309,20 +309,20 @@ class ToyDataset(object):
             n_samples=n_users+n_items,
             n_features=n_features,
             centers=n_centers,
-            # random_state=10
+            random_state=1
         )
 
-        n_itemnts_per_center = [len(item)
+        n_points_per_center = [len(item)
                                 for item in np.array_split(np.arange(n_items),
                                                            n_centers)]
 
-        # pick itemnts from each group and convert it to a item
+        # pick points from each group and convert it to a item
         items_rows = []
         for i in range(n_centers):
             items_rows += list(
                 np.random.choice(
                     np.where(group==i)[0],
-                    n_itemnts_per_center[i],
+                    n_points_per_center[i],
                     replace=False
                 )
             )
@@ -339,13 +339,13 @@ class ToyDataset(object):
 
     def __assign_users_to_items(self, users_features, items_features, D,
                                items_capacities, distance_weight):
-        """Assign users to itemnts of interest
+        """Assign users to points of interest
 
         Args:
             users_features (np.ndarray): users features
-            items_features (np.ndarray): itemnts of interest features
-            D (np.ndarray): Distance matrix between users and itemnts of interest
-            items_capacities (np.ndarray): Capacities of the itemnts of interest
+            items_features (np.ndarray): points of interest features
+            D (np.ndarray): Distance matrix between users and points of interest
+            items_capacities (np.ndarray): Capacities of the points of interest
             distance_weight (float): Importance of the distance in the
                 assignment phase.
 
