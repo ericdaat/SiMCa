@@ -1,4 +1,4 @@
-# Optimal Transport Recommender System
+# SiMaC: Sinkhorn Matrix Factorization with Capacity Constraints
 
 <strong>
 <a href="https://edaoud.com/">Eric Daoud</a><sup>1,2</sup>,
