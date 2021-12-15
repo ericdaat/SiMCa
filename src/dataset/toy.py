@@ -9,9 +9,6 @@ from sklearn.datasets import make_blobs
 from src.utils import compute_distance
 
 
-CIRCLE_RADIUS = 500
-
-
 def save_dataset(toy, filepath):
     with open(filepath, "wb") as f:
         pickle.dump(toy, f)
@@ -45,6 +42,7 @@ class ToyDataset(object):
         self.n_items = n_items
         self.n_centers = n_centers
         self.distance_weight = distance_weight
+        self.circle_radius = 500
 
         # initialize dataset variables
         self.users_x = None
@@ -237,8 +235,8 @@ class ToyDataset(object):
         items_y = []
         for i in np.random.rand(n_items):
             alpha = 2 * math.pi * i
-            x_i = np.cos(alpha) * CIRCLE_RADIUS
-            y_i = np.sin(alpha) * CIRCLE_RADIUS
+            x_i = np.cos(alpha) * self.circle_radius
+            y_i = np.sin(alpha) * self.circle_radius
 
             items_x.append(x_i)
             items_y.append(y_i)
@@ -248,8 +246,8 @@ class ToyDataset(object):
         users_y = []
         for i in np.random.rand(n_users):
             alpha = 2 * math.pi * i
-            x_i = np.cos(alpha) * CIRCLE_RADIUS
-            y_i = np.sin(alpha) * CIRCLE_RADIUS
+            x_i = np.cos(alpha) * self.circle_radius
+            y_i = np.sin(alpha) * self.circle_radius
 
             users_x.append(x_i)
             users_y.append(y_i)
@@ -282,7 +280,7 @@ class ToyDataset(object):
                     users_y[i],
                     items_x[j],
                     items_y[j],
-                    radius=CIRCLE_RADIUS
+                    radius=self.circle_radius
                 )
 
                 D[i][j] = d_ij
