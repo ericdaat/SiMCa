@@ -72,10 +72,8 @@ class SinkhornLoss(nn.Module):
         self.solver = solver
         self.solver_options = solver_options
 
-        self.sinkhorn_loss = SinkhornLossFunc.apply
-
     def forward(self, M, target):
-        return self.sinkhorn_loss(
+        return SinkhornLossFunc.apply(
             M,
             target,
             self.a,
