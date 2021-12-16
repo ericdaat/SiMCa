@@ -3,7 +3,7 @@ import pytest
 import pandas as pd
 
 from src.dataset.toy import ToyDataset
-from src.ml.model import ModelOT
+from src.ml.model import SiMaC
 from src.ml.train import train_model
 
 
@@ -24,7 +24,7 @@ def test_factory(epsilon, alpha, n_items, n_users, n_features,
         distance_weight=distance_weight
     )
 
-    model = ModelOT(
+    model = SiMaC(
         capacities=toy.items_capacities,
         n_users=n_users,
         epsilon=epsilon,
@@ -32,7 +32,7 @@ def test_factory(epsilon, alpha, n_items, n_users, n_features,
         n_features=n_features
     )
 
-    assert isinstance(model, ModelOT)
+    assert isinstance(model, SiMaC)
     assert model.user_embeddings.weight.shape == torch.Size([n_users, 2])
     assert model.item_embeddings.weight.shape == torch.Size([n_items, 2])
 
@@ -75,7 +75,7 @@ def test_train(epsilon, alpha, n_items, n_users, n_centers,
 
     assert y_pred.shape == torch.Size([n_users])
 
-    assert isinstance(model, ModelOT)
+    assert isinstance(model, SiMaC)
 
     assert isinstance(losses_df, pd.DataFrame)
     assert losses_df.columns.tolist() == ["epoch", "loss"]

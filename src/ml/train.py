@@ -4,7 +4,7 @@ import scipy
 import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score
 
-from src.ml.model import ModelOT
+from src.ml.model import SiMaC
 
 
 def assign_with_lap(r_ij, items_capacities):
@@ -113,7 +113,7 @@ def train_model(users_tensor, items_tensor, D_tensor, y_true_tensor, items_capac
     if users_features is not None:
         users_features = torch.FloatTensor(users_features)
 
-    model = ModelOT(
+    model = SiMaC(
         capacities=items_capacities,
         epsilon=epsilon,
         alpha=alpha,

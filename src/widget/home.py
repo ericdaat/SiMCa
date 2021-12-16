@@ -8,7 +8,7 @@ from matplotlib.figure import Figure
 import seaborn as sns
 from flask import Blueprint, render_template, request
 
-from src.dataset.toy import ToyDataset, CIRCLE_RADIUS
+from src.dataset.toy import ToyDataset
 from src import viz
 from src.ml import train
 
@@ -104,7 +104,7 @@ def index():
     viz.plot_distances(
         np.asarray(list(zip(toy.users_x, toy.users_y))),
         np.asarray(list(zip(toy.items_x, toy.items_y))),
-        CIRCLE_RADIUS,
+        toy.circle_radius,
         toy.assigned_item_for_user,
         toy.items_capacities,
         axs[1]
@@ -135,7 +135,7 @@ def index():
     viz.plot_distances(
         np.asarray(list(zip(toy.users_x, toy.users_y))),
         np.asarray(list(zip(toy.items_x, toy.items_y))),
-        CIRCLE_RADIUS,
+        toy.circle_radius,
         y_pred,
         toy.items_capacities,
         axs[1]
