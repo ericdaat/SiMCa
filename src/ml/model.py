@@ -85,12 +85,11 @@ class SiMaC(torch.nn.Module):
 
 
 class SiMaCImplicit(torch.nn.Module):
-    def __init__(self, capacities, n_users, epsilon, alpha,
+    def __init__(self, capacities, n_users, alpha,
                  n_features, user_embeddings=None,
                  train_user_embeddings=False):
         super(SiMaCImplicit, self).__init__()
         self.capacities = torch.FloatTensor(capacities)
-        self.epsilon = epsilon
         self.alpha = alpha
 
         self.item_embeddings = ScaledEmbedding(
