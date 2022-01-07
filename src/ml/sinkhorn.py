@@ -88,3 +88,58 @@ class SinkhornLoss(nn.Module):
             f"a={self.a},\nb={self.b},\n"
             f"epsilon={self.epsilon:.2e}, solver={self.solver}, solver_options={self.solver_options}"
         )
+
+
+class SinkhornValueFunc(Function):
+    @staticmethod
+    def forward(ctx, M, a, b, epsilon, solver, solver_options):
+        P = solver(M.detach(), a, b, epsilon, **solver_options)
+        ctx.save_for_backward(P)
+        H = (P * (1 - P.log())).sum()
+        value_OT = (P*M).sum() + epsilon*H
+        return value_OT
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        P, = ctx.saved_tensors
+        grad_M = P * grad_output
+        return grad_M, None, None, None, None, None
+
+
+class SinkhornValue(nn.Module):
+    """Sinkhorn value.
+
+    Returns optimal value for the regularized OT problem:
+        L(M) = max <M, P> + \epsilon H[P] s.t. \sum_j P_ij = a_i and \sum_i P_ij = b_j
+    with entropy H[P] = - \sum_ij P_ij [log(P_ij) - 1]
+
+    Args:
+        a (torch.Tensor): user capacities
+        b (torch.Tensor): item capacities
+        epsilon (float): regularization parameter
+        solver (function): OT solver
+        solver_kwargs (int): options to pass to the solver
+    """
+    def __init__(self, a, b, epsilon, solver, **solver_options):
+        super().__init__()
+        self.a = a
+        self.b = b
+        self.epsilon = epsilon
+        self.solver = solver
+        self.solver_options = solver_options
+
+    def forward(self, M):
+        return SinkhornValueFunc.apply(
+            M,
+            self.a,
+            self.b,
+            self.epsilon,
+            self.solver,
+            self.solver_options
+        )
+
+    def extra_repr(self):
+        return (
+            f"a={self.a},\nb={self.b},\n"
+            f"epsilon={self.epsilon:.2e}, solver={self.solver}, solver_options={self.solver_options}"
+        )
