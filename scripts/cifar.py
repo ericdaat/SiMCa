@@ -1,3 +1,5 @@
+import logging
+
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -9,6 +11,7 @@ from src.ml.sinkhorn import SinkhornValue, sinkhorn
 
 batch_size=64
 
+logging.basicConfig(level=logging.DEBUG)
 
 class CIFAR10Instance(torchvision.datasets.CIFAR10):
     """
@@ -152,7 +155,7 @@ def main():
 
             epoch_loss += loss.item()
 
-        print(epoch_loss / (batch_idx+1))
+        logging.info(epoch_loss / (batch_idx+1))
 
 
 if __name__ == "__main__":
