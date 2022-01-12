@@ -95,7 +95,9 @@ class SinkhornValueFunc(Function):
     def forward(ctx, M, a, b, epsilon, solver, solver_options):
         P = solver(M.detach(), a, b, epsilon, **solver_options)
         ctx.save_for_backward(P)
-        H = (P * (1 - P.log())).sum()
+        # clamping log(P) to -100 to avoid 0 log(0) = nan
+        log_P = P.log().clamp(min=-100)
+        H = (P * (1 - log_P)).sum()
         value_OT = (P*M).sum() + epsilon*H
 
         return value_OT
