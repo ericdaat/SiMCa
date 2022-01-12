@@ -110,10 +110,6 @@ def main():
     # Load Alexnet model, with output size = K (128)
     model = torchvision.models.alexnet(pretrained=False, num_classes=K)
 
-    # marginals
-    a = torch.ones(batch_size) / batch_size  # minibatch size
-    b = torch.ones(K) / K                    # K clusters (128)
-
     # ADAM optimizer
     optimizer = torch.optim.SGD(lr=0.01, params=model.parameters())
 
@@ -122,6 +118,10 @@ def main():
 
         # loop over minibatches
         for batch_idx, (inputs, targets, indexes) in enumerate(trainloader):
+            # marginals
+            a = torch.ones(inputs.shape[1]) / inputs.shape[1]  # minibatch size
+            b = torch.ones(K) / K                              # K clusters (128)
+
             # train mode
             model.train()
 
