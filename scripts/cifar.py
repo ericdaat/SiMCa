@@ -13,6 +13,7 @@ batch_size=64
 
 logging.basicConfig(level=logging.DEBUG)
 
+
 class CIFAR10Instance(torchvision.datasets.CIFAR10):
     """
     https://github.com/yukimasano/self-label/blob/581957c2fcb3f14a0382cf71a3d36b21b9943798/cifar_utils.py#L5
@@ -105,7 +106,6 @@ def main():
 
     selflabels = np.random.permutation(selflabels)
     selflabels = torch.LongTensor(selflabels)
-
 
     # Load Alexnet model, with output size = K (128)
     model = torchvision.models.alexnet(pretrained=False, num_classes=K)
