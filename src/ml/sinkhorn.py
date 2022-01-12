@@ -97,12 +97,14 @@ class SinkhornValueFunc(Function):
         ctx.save_for_backward(P)
         H = (P * (1 - P.log())).sum()
         value_OT = (P*M).sum() + epsilon*H
+
         return value_OT
 
     @staticmethod
     def backward(ctx, grad_output):
         P, = ctx.saved_tensors
         grad_M = P * grad_output
+
         return grad_M, None, None, None, None, None
 
 
