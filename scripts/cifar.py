@@ -14,12 +14,13 @@ class CIFAR10Instance(torchvision.datasets.CIFAR10):
     """
     https://github.com/yukimasano/self-label/blob/581957c2fcb3f14a0382cf71a3d36b21b9943798/cifar_utils.py#L5
     """
-    def __init__(self, root, train=True, transform=None, target_transform=None, download=False):
+    def __init__(self, root, train=True, transform=None, target_transform=None, download=True):
         super(CIFAR10Instance, self).__init__(
             root=root,
             train=train,
             transform=transform,
-            target_transform=target_transform
+            target_transform=target_transform,
+            download=download
         )
 
 
@@ -152,3 +153,7 @@ def main():
             epoch_loss += loss.item()
 
         print(epoch_loss / (batch_idx+1))
+
+
+if __name__ == "__main__":
+    main()
