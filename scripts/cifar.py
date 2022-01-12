@@ -112,7 +112,9 @@ def main():
 
     # ADAM optimizer
     optimizer = torch.optim.SGD(lr=0.01, params=model.parameters())
-
+    
+    print("Starting training", flush=True)
+    
     for epoch in range(10):
         epoch_loss = 0
 
@@ -155,7 +157,7 @@ def main():
 
             epoch_loss += loss.item()
 
-        logging.info(epoch_loss / (batch_idx+1))
+        print("Epoch {0}: {1:.5f}".format(epoch, epoch_loss / (batch_idx+1), flush=True))
 
 
 if __name__ == "__main__":
