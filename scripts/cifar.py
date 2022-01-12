@@ -121,7 +121,7 @@ def main():
         # loop over minibatches
         for batch_idx, (inputs, targets, indexes) in enumerate(trainloader):
             # marginals
-            a = torch.ones(inputs.shape[1]) / inputs.shape[1]  # minibatch size
+            a = torch.ones(inputs.shape[0]) / inputs.shape[0]  # minibatch size
             b = torch.ones(K) / K                              # K clusters (128)
 
             # train mode
