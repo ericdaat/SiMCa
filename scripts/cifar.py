@@ -13,6 +13,7 @@ batch_size=64
 
 logging.basicConfig(level=logging.DEBUG)
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class CIFAR10Instance(torchvision.datasets.CIFAR10):
     """
@@ -109,17 +110,23 @@ def main():
 
     # Load Alexnet model, with output size = K (128)
     model = torchvision.models.alexnet(pretrained=False, num_classes=K)
+    model.to(device)
 
     # ADAM optimizer
     optimizer = torch.optim.SGD(lr=0.01, params=model.parameters())
-    
+
     print("Starting training", flush=True)
-    
+
     for epoch in range(10):
         epoch_loss = 0
 
         # loop over minibatches
         for batch_idx, (inputs, targets, indexes) in enumerate(trainloader):
+            # tensors to device
+            inputs.to(device)
+            targets.to(device)
+            indexes.to(device)
+
             # marginals
             a = torch.ones(inputs.shape[0]) / inputs.shape[0]  # minibatch size
             b = torch.ones(K) / K                              # K clusters (128)
