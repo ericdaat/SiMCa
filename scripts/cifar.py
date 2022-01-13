@@ -131,6 +131,8 @@ def main():
             # marginals
             a = torch.ones(inputs.shape[0]) / inputs.shape[0]  # minibatch size
             b = torch.ones(K) / K                              # K clusters (128)
+            a = a.to(device)
+            b = b.to(device)
 
             # train mode
             model.train()
@@ -140,10 +142,10 @@ def main():
 
             # compute inputs (images) representations
             x = model(inputs)
-            P = torch.nn.LogSoftmax(dim=1)(x)
+            P = torch.nn.LogSoftmax(dim=1)(x).to(device)
 
             # compute softmax probabilities over each cluster ()
-            M = P - np.log(inputs.shape[0])
+            M = P - np.log(inputs.shape[0]).to(device)
 
             # init Sinkhorn loss
             SV = SinkhornValue(
@@ -155,7 +157,7 @@ def main():
             )
 
             # compute Sinkhorn loss
-            loss = -SV(M)
+            loss = -SV(M).to(device)
 
             # compute gradients
             loss.backward()
