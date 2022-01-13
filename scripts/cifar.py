@@ -83,13 +83,13 @@ def main():
         trainset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=0
+        num_workers=8
     )
     testloader = torch.utils.data.DataLoader(
         testset,
         batch_size=100,
         shuffle=True,
-        num_workers=0
+        num_workers=4
     )
 
     classes = (
@@ -114,7 +114,10 @@ def main():
     model.to(device)
 
     # ADAM optimizer
-    optimizer = torch.optim.SGD(lr=0.01, params=model.parameters())
+    optimizer = torch.optim.SGD(
+        lr=0.001,
+        params=model.parameters()
+    )
 
     print("Starting training", flush=True)
 
