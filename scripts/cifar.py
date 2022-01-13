@@ -4,7 +4,6 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from PIL import Image
-import matplotlib.pyplot as plt
 import numpy as np
 
 from src.ml.sinkhorn import SinkhornValue, sinkhorn
@@ -14,6 +13,8 @@ batch_size=64
 logging.basicConfig(level=logging.DEBUG)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Device is {0}".format(device), flush=True)
+
 
 class CIFAR10Instance(torchvision.datasets.CIFAR10):
     """
@@ -123,9 +124,9 @@ def main():
         # loop over minibatches
         for batch_idx, (inputs, targets, indexes) in enumerate(trainloader):
             # tensors to device
-            inputs.to(device)
-            targets.to(device)
-            indexes.to(device)
+            inputs = inputs.to(device)
+            targets = targets.to(device)
+            indexes = indexes.to(device)
 
             # marginals
             a = torch.ones(inputs.shape[0]) / inputs.shape[0]  # minibatch size
