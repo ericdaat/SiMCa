@@ -145,7 +145,7 @@ def main():
             P = torch.nn.LogSoftmax(dim=1)(x).to(device)
 
             # compute softmax probabilities over each cluster ()
-            M = P - np.log(inputs.shape[0]).to(device)
+            M = (P - np.log(inputs.shape[0])).to(device)
 
             # init Sinkhorn loss
             SV = SinkhornValue(
