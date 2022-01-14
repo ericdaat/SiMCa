@@ -6,3 +6,5 @@ venv
 *.pkl
 *.pyc
 .vscode
+gpu_*
+*.batch
