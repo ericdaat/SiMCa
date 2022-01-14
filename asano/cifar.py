@@ -317,7 +317,7 @@ def train(epoch, selflabels):
             b,
             epsilon=0.1,
             solver=pot_sinkhorn,
-            n_iter=100
+            numIterMax=100
         )
 
         if args.hc == 1:

@@ -1,3 +1,4 @@
+from turtle import down
 import torch
 import torchvision
 from PIL import Image
@@ -6,11 +7,14 @@ import torch.nn as nn
 class CIFAR10Instance(torchvision.datasets.CIFAR10):
     """CIFAR10Instance Dataset.
     """
-    def __init__(self, root, train=True, transform=None, target_transform=None, download=False):
-        super(CIFAR10Instance, self).__init__(root=root,
-                                                           train=train,
-                                                           transform=transform,
-                                                           target_transform=target_transform)
+    def __init__(self, root, train=True, transform=None, target_transform=None, download=True):
+        super(CIFAR10Instance, self).__init__(
+            root=root,
+            train=train,
+            transform=transform,
+            target_transform=target_transform,
+            download=download
+        )
 
 
     def __getitem__(self, index):

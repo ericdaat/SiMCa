@@ -15,12 +15,12 @@ device='1'  # cuda device
 bs=128      # batchsize
 lr=0.03     #learning rate
 
-dir="/scratch/local/ramdisk/yuki/data"
+dir="./data"
 folder=cifar${type}/${arch}-K${ncl}_lr${lr}_bs${bs}_hc${hc}_nopt${nopts}_n${epochs}_linear_sequential
 EXP=/scratch/shared/nfs1/yuki/pseudolabs/${folder}
 mkdir -p ${EXP}
 
-python3 cifar.py \
+python3 asano/cifar.py \
   --arch ${arch} \
   --device ${device} \
   --exp ${EXP} \
