@@ -17,7 +17,7 @@ lr=0.03     #learning rate
 
 dir="./data"
 folder=cifar${type}/${arch}-K${ncl}_lr${lr}_bs${bs}_hc${hc}_nopt${nopts}_n${epochs}_linear_sequential
-EXP=/scratch/shared/nfs1/yuki/pseudolabs/${folder}
+EXP=${folder}
 mkdir -p ${EXP}
 
 python3 asano/cifar.py \
