@@ -11,6 +11,7 @@ import torch.nn.init as init
 from torch.nn import ModuleList
 from torchvision.utils import make_grid
 
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self):

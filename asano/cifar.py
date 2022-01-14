@@ -8,7 +8,7 @@ import os
 import argparse
 import time
 
-import asano.models
+from asano import models
 import numpy as np
 import torch
 import torch.nn as nn
