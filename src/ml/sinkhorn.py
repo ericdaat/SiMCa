@@ -1,6 +1,18 @@
+from ast import Num
 import torch
 from torch.autograd import Function
 import torch.nn as nn
+import ot
+
+
+def pot_sinkhorn(M, a, b, epsilon, **solver_options):
+    return ot.sinkhorn(
+        a,
+        b,
+        -M,
+        epsilon,
+        **solver_options
+    )
 
 
 def sinkhorn(M, a, b, epsilon, n_iter):
@@ -93,7 +105,13 @@ class SinkhornLoss(nn.Module):
 class SinkhornValueFunc(Function):
     @staticmethod
     def forward(ctx, M, a, b, epsilon, solver, solver_options):
-        P = solver(M.detach(), a, b, epsilon, **solver_options)
+        P = solver(
+            M.detach(),
+            a,
+            b,
+            epsilon,
+            **solver_options
+        )
         ctx.save_for_backward(P)
         # clamping log(P) to -100 to avoid 0 log(0) = nan
         log_P = P.log().clamp(min=-100)

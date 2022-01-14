@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 import numpy as np
 
-from src.ml.sinkhorn import SinkhornValue, sinkhorn
+from src.ml.sinkhorn import SinkhornValue, sinkhorn, pot_sinkhorn
 
 batch_size=64
 
@@ -155,7 +155,7 @@ def main():
                 a,
                 b,
                 epsilon=0.1,
-                solver=sinkhorn,
+                solver=pot_sinkhorn,
                 n_iter=10
             )
 
