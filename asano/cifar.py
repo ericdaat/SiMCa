@@ -54,7 +54,8 @@ def optimize_L_sk(PS):
             err = np.nansum(np.abs(c / c_new - 1))
         c = c_new
         _counter += 1
-    print("error: ", err, 'step ', _counter, flush=True)  # " nonneg: ", sum(I), flush=True)
+    # " nonneg: ", sum(I), flush=True)
+    print("error: ", err, 'step ', _counter, flush=True)
     # inplace calculations.
     PS *= np.squeeze(c)
     PS = PS.T
@@ -71,8 +72,10 @@ def optimize_L_sk(PS):
     np.log(sol, sol)
     cost = -(1. / args.lamb) * np.nansum(sol) / N
     print('cost: ', cost, flush=True)
-    print('opt took {0:.2f}min, {1:4d}iters'.format(((time.time() - tt) / 60.), _counter), flush=True)
+    print('opt took {0:.2f}min, {1:4d}iters'.format(
+        ((time.time() - tt) / 60.), _counter), flush=True)
     return cost, selflabels
+
 
 def opt_sk(model, selflabels_in, epoch):
     if args.hc == 1:
@@ -98,7 +101,7 @@ def opt_sk(model, selflabels_in, epoch):
         tl = getattr(model, "top_layer%d" % nh)
         # do the forward pass:
         PS = (PS_pre @ tl.weight.cpu().numpy().T
-                   + tl.bias.cpu().numpy())
+              + tl.bias.cpu().numpy())
         PS = py_softmax(PS, 1)
         c, selflabels_ = optimize_L_sk(PS)
         _costs[nh] = c
@@ -107,10 +110,12 @@ def opt_sk(model, selflabels_in, epoch):
     return selflabels
 
 
-parser = argparse.ArgumentParser(description='PyTorch Implementation of Self-Label for CIFAR10/100')
+parser = argparse.ArgumentParser(
+    description='PyTorch Implementation of Self-Label for CIFAR10/100')
 
 parser.add_argument('--device', default="1", type=str, help='cuda device')
-parser.add_argument('--resume', '-r', default='', type=str, help='resume from checkpoint')
+parser.add_argument('--resume', '-r', default='', type=str,
+                    help='resume from checkpoint')
 parser.add_argument('--test-only', action='store_true', help='test only')
 parser.add_argument('--restart', action='store_true', help='restart opt')
 
@@ -120,17 +125,21 @@ parser.add_argument('--ncl', default=128, type=int, help='number of clusters')
 parser.add_argument('--hc', default=20, type=int, help='number of heads')
 
 # SK-optimization
-parser.add_argument('--lamb', default=10.0, type=float, help='SK lambda parameter')
+parser.add_argument('--lamb', default=10.0, type=float,
+                    help='SK lambda parameter')
 parser.add_argument('--nopts', default=400, type=int, help='number of SK opts')
 
 # optimization
 parser.add_argument('--lr', default=0.05, type=float, help='learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='sgd momentum')
-parser.add_argument('--epochs', default=800, type=int, help='number of epochs to train')
-parser.add_argument('--batch-size', default=64, type=int, metavar='BS', help='batch size')
+parser.add_argument('--epochs', default=800, type=int,
+                    help='number of epochs to train')
+parser.add_argument('--batch-size', default=64, type=int,
+                    metavar='BS', help='batch size')
 
 # logging saving etc.
-parser.add_argument('--datadir', default='/scratch/local/ramdisk/yuki/data',type=str)
+parser.add_argument(
+    '--datadir', default='/scratch/local/ramdisk/yuki/data', type=str)
 parser.add_argument('--exp', default='./cifar', type=str, help='experimentdir')
 parser.add_argument('--type', default='10', type=int, help='cifar10 or 100')
 
@@ -141,7 +150,7 @@ knn_dim = 4096
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 # Data
-print('==> Preparing data..') #########################
+print('==> Preparing data..')
 transform_train = tfs.Compose([
     tfs.Resize(256),
     tfs.RandomResizedCrop(size=224, scale=(0.2, 1.)),
@@ -152,8 +161,8 @@ transform_train = tfs.Compose([
     tfs.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
 transform_test = tfs.Compose([
-        tfs.Resize(256),
-        tfs.CenterCrop(224),
+    tfs.Resize(256),
+    tfs.CenterCrop(224),
     tfs.ToTensor(),
     tfs.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
@@ -161,33 +170,36 @@ transform_test = tfs.Compose([
 if args.type == 10:
     trainset = CIFAR10Instance(root=args.datadir, train=True, download=True,
                                transform=transform_train)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=8)
-
+    trainloader = torch.utils.data.DataLoader(
+        trainset, batch_size=args.batch_size, shuffle=True, num_workers=8)
 
     testset = CIFAR10Instance(root=args.datadir, train=False, download=True,
                               transform=transform_test)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
+    testloader = torch.utils.data.DataLoader(
+        testset, batch_size=100, shuffle=False, num_workers=2)
 else:
 
     trainset = CIFAR100Instance(root=args.datadir, train=True, download=True,
-                               transform=transform_train)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=8)
-
+                                transform=transform_train)
+    trainloader = torch.utils.data.DataLoader(
+        trainset, batch_size=args.batch_size, shuffle=True, num_workers=8)
 
     testset = CIFAR100Instance(root=args.datadir, train=False, download=True,
-                              transform=transform_test)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
+                               transform=transform_test)
+    testloader = torch.utils.data.DataLoader(
+        testset, batch_size=100, shuffle=False, num_workers=2)
 
 
-print('==> Building model..') ##########################################
+print('==> Building model..')
 numc = [args.ncl] * args.hc
 model = models.__dict__[args.arch](num_classes=numc)
 knn_dim = 4096
 
 N = len(trainloader.dataset)
-optimize_times = ((args.epochs + 1.0001)*N*(np.linspace(0, 1, args.nopts))[::-1]).tolist()
-optimize_times = [(args.epochs +10)*N] + optimize_times
-print('We will optimize L at epochs:', [np.round(1.0*t/N, 2) for t in optimize_times], flush=True)
+optimize_times = ((args.epochs + 1.0001)*N *
+                  (np.linspace(0, 1, args.nopts))[::-1]).tolist()
+optimize_times = [(args.epochs + 10)*N] + optimize_times
+# print('We will optimize L at epochs:', [np.round(1.0*t/N, 2) for t in optimize_times], flush=True)
 
 # init selflabels randomly
 if args.hc == 1:
@@ -205,12 +217,13 @@ else:
     selflabels = torch.LongTensor(selflabels).cuda()
 
 
-optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=5e-4)
+optimizer = optim.SGD(model.parameters(), lr=args.lr,
+                      momentum=args.momentum, weight_decay=5e-4)
 # Model
 if args.test_only or len(args.resume) > 0:
     # Load checkpoint.[
     print('==> Resuming from checkpoint..')
-    assert(os.path.isdir('%s/'%(args.exp)))
+    assert(os.path.isdir('%s/' % (args.exp)))
     checkpoint = torch.load(args.resume)
     print('loaded checkpoint at: ', checkpoint['epoch'])
     model.load_state_dict(checkpoint['net'])
@@ -236,12 +249,15 @@ criterion = nn.CrossEntropyLoss()
 if args.test_only:
     feature_return_switch(model, True)
     usepca = True
-    acc = kNN(model, trainloader, testloader, K=[200, 50, 10, 5, 1], sigma=[0.1, 0.5], dim=knn_dim, use_pca=usepca)
+    acc = kNN(model, trainloader, testloader, K=[200, 50, 10, 5, 1], sigma=[
+              0.1, 0.5], dim=knn_dim, use_pca=usepca)
     sys.exit(0)
 
 name = "%s" % args.exp.replace('/', '_')
 writer = SummaryWriter(f'./runs/cifar{args.type}/{name}')
-writer.add_text('args', " \n".join(['%s %s' % (arg, getattr(args, arg)) for arg in vars(args)]))
+writer.add_text('args', " \n".join(
+    ['%s %s' % (arg, getattr(args, arg)) for arg in vars(args)]))
+
 
 def adjust_learning_rate(optimizer, epoch):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
@@ -277,6 +293,8 @@ def adjust_learning_rate(optimizer, epoch):
             param_group['lr'] = lr
 
 # Training
+
+
 def train(epoch, selflabels):
     print('\nEpoch: %d' % epoch)
     print(name)
@@ -291,7 +309,7 @@ def train(epoch, selflabels):
     end = time.time()
 
     for batch_idx, (inputs, targets, indexes) in enumerate(trainloader):
-        niter = epoch * len(trainloader) + batch_idx
+        # niter = epoch * len(trainloader) + batch_idx
         # if niter * trainloader.batch_size >= optimize_times[-1]:
         #     with torch.no_grad():
         #         _ = optimize_times.pop()
@@ -301,7 +319,8 @@ def train(epoch, selflabels):
         #         if args.hc >1:
         #             feature_return_switch(model, False)
         data_time.update(time.time() - end)
-        inputs, targets, indexes = inputs.to(device), targets.to(device), indexes.to(device)
+        inputs, targets, indexes = inputs.to(
+            device), targets.to(device), indexes.to(device)
         optimizer.zero_grad()
 
         outputs = model(inputs)
@@ -309,23 +328,29 @@ def train(epoch, selflabels):
         M = (outputs - np.log(inputs.shape[0])).to(device)
 
         # # marginals
-        a = (torch.ones(inputs.shape[0]) / inputs.shape[0]).to(device)  # minibatch size
-        b = (torch.ones(args.ncl) / args.ncl).to(device)                # K clusters
+        # minibatch size
+        a = (torch.ones(inputs.shape[0]) / inputs.shape[0]).to(device)
+        # K clusters
+        b = (torch.ones(args.ncl) / args.ncl).to(device)
 
         SV = SinkhornValue(
             a,
             b,
-            epsilon=0.1,
+            epsilon=args.lamb,
             solver=pot_sinkhorn,
-            numIterMax=100
+            numIterMax=args.nopts
         )
 
         if args.hc == 1:
             # loss = criterion(outputs, selflabels[indexes])
-            loss = -SV(M)
+            loss = SV(-M)
         else:
-            loss = torch.mean(torch.stack([criterion(outputs[h],
-                                                     selflabels[h, indexes]) for h in range(args.hc)]))
+            loss = torch.mean(
+                torch.stack(
+                    [SV(-M)
+                     for h in range(args.hc)]
+                )
+            )
             # loss = torch.mean(torch.stack([-SV(M) for h in range(args.hc)]))
 
         loss.backward()
@@ -341,8 +366,10 @@ def train(epoch, selflabels):
                   'Time: {batch_time.val:.3f} ({batch_time.avg:.3f}) '
                   'Data: {data_time.val:.3f} ({data_time.avg:.3f}) '
                   'Loss: {train_loss.val:.4f} ({train_loss.avg:.4f})'.format(
-                epoch, batch_idx, len(trainloader), batch_time=batch_time, data_time=data_time, train_loss=train_loss))
-            writer.add_scalar("loss", loss.item(), batch_idx*512 +epoch*len(trainloader.dataset))
+                      epoch, batch_idx, len(trainloader), batch_time=batch_time, data_time=data_time, train_loss=train_loss))
+            writer.add_scalar("loss", loss.item(), batch_idx *
+                              512 + epoch*len(trainloader.dataset))
+
     return selflabels
 
 
@@ -389,7 +416,8 @@ for epoch in range(start_epoch, start_epoch + args.epochs):
         feature_return_switch(model, False)
     print('best accuracy: {:.2f}'.format(best_acc * 100))
 
-checkpoint = torch.load('%s'%args.exp+'/best_ckpt.t7' )
+checkpoint = torch.load('%s' % args.exp+'/best_ckpt.t7')
 model.load_state_dict(checkpoint['net'])
 feature_return_switch(model, True)
-acc = kNN(model, trainloader, testloader, K=10, sigma=0.1, dim=knn_dim, use_pca=True)
+acc = kNN(model, trainloader, testloader, K=10,
+          sigma=0.1, dim=knn_dim, use_pca=True)
