@@ -23,10 +23,10 @@ class AlexNet(nn.Module):
         self.headcount = len(num_classes)
         self.return_features = False
         if len(num_classes) == 1:
-            self.top_layer = nn.Linear(4096, num_classes[0])
+            self.top_layer = nn.Sequential(nn.Linear(4096, num_classes[0]),nn.LogSoftmax(dim=1))
         else:
             for a,i in enumerate(num_classes):
-                setattr(self, "top_layer%d" % a, nn.Linear(4096, i))
+                setattr(self, "top_layer%d" % a, nn.Sequential(nn.Linear(4096, i),nn.LogSoftmax(dim=1)))
             self.top_layer = None  # this way headcount can act as switch.
         if init:
             self._initialize_weights()
