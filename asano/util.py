@@ -108,10 +108,10 @@ def write_conv(writer, model, epoch, sobel=False):
         conv1_sobel_w = list(ModuleList(list(model.children())[0].children())[0].parameters())[0]
         conv1_ = make_grid(conv1_sobel_w[:, 0:1, :, :], nrow=8,
                            normalize=True, scale_each=True)
-        self.writer.add_image('conv1_sobel_1', conv1_, epoch)
+        writer.add_image('conv1_sobel_1', conv1_, epoch)
         conv2_ = make_grid(conv1_sobel_w[:, 1:2, :, :], nrow=8,
                            normalize=True, scale_each=True)
-        self.writer.add_image('conv1_sobel_2', conv2_, epoch)
+        writer.add_image('conv1_sobel_2', conv2_, epoch)
         conv1_x = make_grid(torch.sum(conv1_sobel_w[:, :, :, :], 1, keepdim=True), nrow=8,
                             normalize=True, scale_each=True)
         writer.add_image('conv1', conv1_x, epoch)
