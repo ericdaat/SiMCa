@@ -305,7 +305,7 @@ def train(epoch, selflabels):
         optimizer.zero_grad()
 
         outputs = model(inputs)
-        # M = outputs
+        outputs = torch.nn.LogSoftmax(dim=1)(outputs)
         M = (outputs - np.log(inputs.shape[0])).to(device)
 
         # # marginals
