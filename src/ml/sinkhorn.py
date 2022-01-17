@@ -117,7 +117,7 @@ class SinkhornValueFunc(Function):
         # clamping log(P) to -100 to avoid 0 log(0) = nan
         log_P = P.log().clamp(min=-100)
         H = (P * (1 - log_P)).sum()
-        value_OT = (P*M).sum() + epsilon*H
+        value_OT = (P*M).sum() - epsilon*H
 
         return (P*M).sum() #value_OT
 
