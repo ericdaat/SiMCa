@@ -46,26 +46,25 @@ parser.add_argument('--restart', action='store_true', help='restart opt')
 
 # model
 parser.add_argument('--arch', default='alexnet', type=str, help='architecture')
-parser.add_argument('--ncl', default=128, type=int, help='number of clusters')
+parser.add_argument('--ncl', default=256, type=int, help='number of clusters')
 parser.add_argument('--hc', default=10, type=int, help='number of heads')
 
 # SK-optimization
-parser.add_argument('--lamb', default=10.0, type=float,
-                    help='SK lambda parameter')
-parser.add_argument('--nopts', default=400, type=int, help='number of SK opts')
+#parser.add_argument('--lamb', default=10.0, type=float,                   help='SK lambda parameter')
+#parser.add_argument('--nopts', default=400, type=int, help='number of SK opts')
 
 # optimization
-parser.add_argument('--lr', default=0.001, type=float, help='learning rate')
+parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='sgd momentum')
 parser.add_argument('--epochs', default=800, type=int,
                     help='number of epochs to train')
-parser.add_argument('--batch-size', default=64, type=int,
+parser.add_argument('--batch-size', default=1024, type=int,
                     metavar='BS', help='batch size')
 
 # logging saving etc.
 parser.add_argument(
-    '--datadir', default='/scratch/local/ramdisk/yuki/data', type=str)
-parser.add_argument('--exp', default='./cifar', type=str, help='experimentdir')
+    '--datadir', default='/home/mlelarge/data', type=str)
+parser.add_argument('--exp', default='/home/mlelarge/GitHub/SiMaC/expe', type=str, help='experimentdir')
 parser.add_argument('--type', default='10', type=int, help='cifar10 or 100')
 
 args = parser.parse_args()
