@@ -56,7 +56,7 @@ parser.add_argument('--hc', default=10, type=int, help='number of heads')
 # optimization
 parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='sgd momentum')
-parser.add_argument('--epochs', default=800, type=int,
+parser.add_argument('--epochs', default=400, type=int,
                     help='number of epochs to train')
 parser.add_argument('--batch-size', default=1024, type=int,
                     metavar='BS', help='batch size')
