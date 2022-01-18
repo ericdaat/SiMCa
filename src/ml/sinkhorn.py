@@ -6,11 +6,12 @@ import ot
 
 
 def pot_sinkhorn(M, a, b, epsilon, **solver_options):
-    return ot.sinkhorn(
+    return ot.bregman.sinkhorn_log( #ot.sinkhorn(
         a,
         b,
-        -M,
+        M,
         epsilon,
+        stopThr=1e-02,
         **solver_options
     )
 
@@ -106,7 +107,7 @@ class SinkhornValueFunc(Function):
     @staticmethod
     def forward(ctx, M, a, b, epsilon, solver, solver_options):
         P = solver(
-            M.detach(),
+            M,
             a,
             b,
             epsilon,
@@ -116,11 +117,11 @@ class SinkhornValueFunc(Function):
         ctx.save_for_backward(P)
         # clamping log(P) to -100 to avoid 0 log(0) = nan
         log_P = P.log().clamp(min=-100)
-        # H = (P * (1 - log_P)).sum()
-        H = - (P * log_P).sum()
-        value_OT = (P*M).sum() + epsilon*H
+        H = (P * (1 - log_P)).sum()
+        #H = - (P * log_P).sum()
+        value_OT = (P*M).sum() - epsilon*H
 
-        return value_OT
+        return (P*M).sum() #value_OT
 
     @staticmethod
     def backward(ctx, grad_output):
