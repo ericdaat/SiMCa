@@ -156,8 +156,8 @@ if args.test_only or len(args.resume) > 0:
         optimizer.load_state_dict(checkpoint['opt'])
     selflabels = checkpoint['L']
     selflabels = selflabels.to(device)
-    include = [(qq / N >= start_epoch) for qq in optimize_times]
-    optimize_times = (np.array(optimize_times)[include]).tolist()
+    # include = [(qq / N >= start_epoch) for qq in optimize_times]
+    # optimize_times = (np.array(optimize_times)[include]).tolist()
     # print('We will optimize L at epochs:', [np.round(1.0 * t / N, 2) for t in optimize_times], flush=True)
     model.to(device)
     # for state in optimizer.state.values():
