@@ -166,7 +166,7 @@ class SinkhornValue(nn.Module):
         b = torch.ones(M.shape[1]) / M.shape[1]                # Columns in M
 
         # Compute sinkhorn
-        P = SinkhornValueFunc.apply(
+        loss = SinkhornValueFunc.apply(
             M,
             self.stored_M,
             a,
@@ -188,7 +188,7 @@ class SinkhornValue(nn.Module):
             self.stored_M = torch.roll(self.stored_M, 1, 0)
             self.stored_M[:batch_size, :] = M
 
-        return P
+        return loss
 
     def extra_repr(self):
         return (
