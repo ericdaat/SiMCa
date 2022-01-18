@@ -107,17 +107,15 @@ class SinkhornLoss(nn.Module):
 class SinkhornValueFunc(Function):
     @staticmethod
     def forward(ctx, M, stored_M, a, b, epsilon, solver, solver_options):
-        # Use the queue
-        M = torch.cat([M, stored_M])
-
         # Run Sinkhorn
         P = solver(
-            M,
+            torch.cat([M, stored_M]),  # Use the queue
             a,
             b,
             epsilon,
             **solver_options
         )
+        P = P[:M.shape[0], :]  # Take only current batch
 
         ctx.save_for_backward(P)
         return (P*M).sum()
@@ -127,7 +125,7 @@ class SinkhornValueFunc(Function):
         P, = ctx.saved_tensors
         grad_M = P * grad_output
 
-        return grad_M, None, None, None, None, None
+        return grad_M, None, None, None, None, None, None
 
 
 class SinkhornValue(nn.Module):
