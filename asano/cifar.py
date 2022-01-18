@@ -8,18 +8,16 @@ import os
 import argparse
 import time
 
-from asano import models
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
 import torchvision.transforms as tfs
 from tensorboardX import SummaryWriter
 
+from asano import models
 from asano.util import AverageMeter, setup_runtime, py_softmax
 from asano.cifar_utils import kNN, CIFAR10Instance, CIFAR100Instance
-
 from src.ml.sinkhorn import SinkhornValue, sinkhorn, pot_sinkhorn
 
 
@@ -36,7 +34,8 @@ def feature_return_switch(model, bool=True):
     model.return_features = bool
 
 
-parser = argparse.ArgumentParser(description='PyTorch Implementation of Self-Label for CIFAR10/100')
+parser = argparse.ArgumentParser(
+    description='PyTorch Implementation of Self-Label for CIFAR10/100')
 
 parser.add_argument('--device', default="1", type=str, help='cuda device')
 parser.add_argument('--resume', '-r', default='', type=str,
@@ -64,7 +63,8 @@ parser.add_argument('--batch-size', default=1024, type=int,
 # logging saving etc.
 parser.add_argument(
     '--datadir', default='/home/mlelarge/data', type=str)
-parser.add_argument('--exp', default='/home/mlelarge/GitHub/SiMaC/expe', type=str, help='experimentdir')
+parser.add_argument(
+    '--exp', default='/home/mlelarge/GitHub/SiMaC/expe', type=str, help='experimentdir')
 parser.add_argument('--type', default='10', type=int, help='cifar10 or 100')
 
 args = parser.parse_args()
@@ -167,7 +167,7 @@ if args.test_only or len(args.resume) > 0:
 
 
 model.to(device)
-#criterion = nn.CrossEntropyLoss()
+# criterion = nn.CrossEntropyLoss()
 
 if args.test_only:
     feature_return_switch(model, True)
@@ -180,7 +180,6 @@ name = "%s" % args.exp.replace('/', '_')
 writer = SummaryWriter(f'./runs/cifar{args.type}/{name}')
 writer.add_text('args', " \n".join(
     ['%s %s' % (arg, getattr(args, arg)) for arg in vars(args)]))
-
 
 
 # Training
@@ -198,7 +197,7 @@ def train(epoch):
     end = time.time()
 
     for batch_idx, (inputs, targets, indexes) in enumerate(trainloader):
-        #niter = epoch * len(trainloader) + batch_idx
+        # niter = epoch * len(trainloader) + batch_idx
         # if niter * trainloader.batch_size >= optimize_times[-1]:
         #     with torch.no_grad():
         #         _ = optimize_times.pop()
@@ -213,29 +212,22 @@ def train(epoch):
         optimizer.zero_grad()
 
         outputs = model(inputs)
-        #M = outputs
-        #M = (outputs - np.log(inputs.shape[0])).to(device)
-
-        # # marginals
-        # minibatch size
-        a = (torch.ones(inputs.shape[0]) / inputs.shape[0]).to(device)
-        # K clusters
-        b = (torch.ones(args.ncl) / args.ncl).to(device)
+        # M = outputs
+        # M = (outputs - np.log(inputs.shape[0])).to(device)
 
         SV = SinkhornValue(
-            a,
-            b,
             epsilon=.04,
-            solver=pot_sinkhorn
-            #numIterMax=400
+            solver=pot_sinkhorn,
+            max_n_batches_in_queue=10
         )
 
         if args.hc == 1:
             # loss = criterion(outputs, selflabels[indexes])
             loss = SV(-outputs)
         else:
-            #loss = torch.mean(torch.stack([criterion(outputs[h], selflabels[h, indexes]) for h in range(args.hc)]))
-            loss = torch.mean(torch.stack([SV(-outputs[h]) for h in range(args.hc)]))
+            # loss = torch.mean(torch.stack([criterion(outputs[h], selflabels[h, indexes]) for h in range(args.hc)]))
+            loss = torch.mean(torch.stack(
+                [SV(-outputs[h]) for h in range(args.hc)]))
 
         loss.backward()
         optimizer.step()
@@ -250,8 +242,9 @@ def train(epoch):
                   'Time: {batch_time.val:.3f} ({batch_time.avg:.3f}) '
                   'Data: {data_time.val:.3f} ({data_time.avg:.3f}) '
                   'Loss: {train_loss.val:.4f} ({train_loss.avg:.4f})'.format(
-                epoch, batch_idx, len(trainloader), batch_time=batch_time, data_time=data_time, train_loss=train_loss))
-            writer.add_scalar("loss", loss.item(), batch_idx*512 +epoch*len(trainloader.dataset))
+                      epoch, batch_idx, len(trainloader), batch_time=batch_time, data_time=data_time, train_loss=train_loss))
+            writer.add_scalar("loss", loss.item(), batch_idx *
+                              512 + epoch*len(trainloader.dataset))
     pass
 
 
