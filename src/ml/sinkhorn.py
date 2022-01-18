@@ -183,7 +183,7 @@ class SinkhornValue(nn.Module):
             self.stored_M = M_concat
         else:
             # Roll stored M, older batch comes first, replace it with M
-            self.stored_M = torch.roll(self.stored_M, 1, 0)
+            self.stored_M = torch.roll(self.stored_M, batch_size, 0)
             self.stored_M[:batch_size, :] = M
 
         return loss
