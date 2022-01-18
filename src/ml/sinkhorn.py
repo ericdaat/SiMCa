@@ -6,7 +6,7 @@ import ot
 
 
 def pot_sinkhorn(M, a, b, epsilon, **solver_options):
-    return ot.bregman.sinkhorn_log( #ot.sinkhorn(
+    return ot.bregman.sinkhorn_log(
         a,
         b,
         M,
@@ -99,13 +99,18 @@ class SinkhornLoss(nn.Module):
     def extra_repr(self):
         return (
             f"a={self.a},\nb={self.b},\n"
-            f"epsilon={self.epsilon:.2e}, solver={self.solver}, solver_options={self.solver_options}"
+            f"epsilon={self.epsilon:.2e}, solver={self.solver},"
+            "solver_options={self.solver_options}"
         )
 
 
 class SinkhornValueFunc(Function):
     @staticmethod
-    def forward(ctx, M, a, b, epsilon, solver, solver_options):
+    def forward(ctx, M, stored_M, a, b, epsilon, solver, solver_options):
+        # Use the queue
+        M = torch.cat([M, stored_M])
+
+        # Run Sinkhorn
         P = solver(
             M,
             a,
@@ -115,13 +120,7 @@ class SinkhornValueFunc(Function):
         )
 
         ctx.save_for_backward(P)
-        # clamping log(P) to -100 to avoid 0 log(0) = nan
-        log_P = P.log().clamp(min=-100)
-        H = (P * (1 - log_P)).sum()
-        #H = - (P * log_P).sum()
-        value_OT = (P*M).sum() - epsilon*H
-
-        return (P*M).sum() #value_OT
+        return (P*M).sum()
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -139,32 +138,60 @@ class SinkhornValue(nn.Module):
     with entropy H[P] = - \sum_ij P_ij [log(P_ij) - 1]
 
     Args:
-        a (torch.Tensor): user capacities
-        b (torch.Tensor): item capacities
         epsilon (float): regularization parameter
         solver (function): OT solver
         solver_kwargs (int): options to pass to the solver
     """
-    def __init__(self, a, b, epsilon, solver, **solver_options):
+    def __init__(self, epsilon, max_n_batches_in_queue, solver,
+                 **solver_options):
         super().__init__()
-        self.a = a
-        self.b = b
+        # Sinkhorn params
         self.epsilon = epsilon
         self.solver = solver
         self.solver_options = solver_options
 
+        # Queue params
+        self.stored_M = torch.Tensor()  # tensor acts as queue
+        self.max_n_batches_in_queue = max_n_batches_in_queue
+
     def forward(self, M):
-        return SinkhornValueFunc.apply(
+        batch_size = M.shape[0]
+
+        #################
+        # Sinkhorn step #
+        #################
+        # Compute marginals
+        M_concat = torch.cat([M, self.stored_M])
+        a = torch.ones(M_concat.shape[0]) / M_concat.shape[0]  # Rows in M
+        b = torch.ones(M.shape[1]) / M.shape[1]                # Columns in M
+
+        # Compute sinkhorn
+        P = SinkhornValueFunc.apply(
             M,
-            self.a,
-            self.b,
+            self.stored_M,
+            a,
+            b,
             self.epsilon,
             self.solver,
             self.solver_options
         )
 
+        ################
+        # Update queue #
+        ################
+        n_batches_in_queue = self.stored_M.shape[0] / batch_size
+        if n_batches_in_queue < self.max_n_batches_in_queue:
+            # Append current batch to previous batches
+            self.stored_M = M_concat
+        else:
+            # Roll stored M, older batch comes first, replace it with M
+            self.stored_M = torch.roll(self.stored_M, 1, 0)
+            self.stored_M[:batch_size, :] = M
+
+        return P
+
     def extra_repr(self):
         return (
-            f"a={self.a},\nb={self.b},\n"
-            f"epsilon={self.epsilon:.2e}, solver={self.solver}, solver_options={self.solver_options}"
+            f"epsilon={self.epsilon:.2e}, solver={self.solver},"
+            "solver_options={self.solver_options}"
         )
