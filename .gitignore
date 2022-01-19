@@ -8,3 +8,5 @@ venv
 .vscode
 gpu_*
 *.batch
+runs
+cifar10
