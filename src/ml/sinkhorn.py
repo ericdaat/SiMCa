@@ -12,7 +12,6 @@ def pot_sinkhorn(M, a, b, epsilon, **solver_options):
         b,
         M,
         epsilon,
-        stopThr=1e-02,
         **solver_options
     )
 

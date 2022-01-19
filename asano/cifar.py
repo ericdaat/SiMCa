@@ -216,9 +216,11 @@ def train(epoch):
         # M = (outputs - np.log(inputs.shape[0])).to(device)
 
         SV = SinkhornValue(
-            epsilon=.04,
+            epsilon=0.1,
             solver=pot_sinkhorn,
-            max_n_batches_in_queue=10
+            max_n_batches_in_queue=3,
+            # stopThr=1e-02,
+            numIterMax=100
         )
 
         if args.hc == 1:
