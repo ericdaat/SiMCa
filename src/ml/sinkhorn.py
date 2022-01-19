@@ -1,8 +1,9 @@
-from ast import Num
 import torch
 from torch.autograd import Function
 import torch.nn as nn
 import ot
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def pot_sinkhorn(M, a, b, epsilon, **solver_options):
@@ -149,19 +150,20 @@ class SinkhornValue(nn.Module):
         self.solver_options = solver_options
 
         # Queue params
-        self.stored_M = torch.Tensor()  # tensor acts as queue
+        self.stored_M = torch.Tensor(device=device)  # tensor acts as queue
         self.max_n_batches_in_queue = max_n_batches_in_queue
 
     def forward(self, M):
         batch_size = M.shape[0]
+        M = M.to(device)
 
         #################
         # Sinkhorn step #
         #################
         # Compute marginals
-        M_concat = torch.cat([M, self.stored_M])
-        a = torch.ones(M_concat.shape[0])
-        b = torch.ones(M.shape[1]) / (M.shape[0] / M.shape[1])
+        M_concat = torch.cat([M, self.stored_M]).to(device)
+        a = torch.ones(M_concat.shape[0]).to(device)
+        b = (torch.ones(M.shape[1]) / (M.shape[0] / M.shape[1])).to(device)
 
         # Compute sinkhorn
         loss = SinkhornValueFunc.apply(

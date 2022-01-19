@@ -49,8 +49,8 @@ parser.add_argument('--ncl', default=256, type=int, help='number of clusters')
 parser.add_argument('--hc', default=10, type=int, help='number of heads')
 
 # SK-optimization
-#parser.add_argument('--lamb', default=10.0, type=float,                   help='SK lambda parameter')
-#parser.add_argument('--nopts', default=400, type=int, help='number of SK opts')
+parser.add_argument('--lamb', default=10.0, type=float, help='SK lambda parameter')
+parser.add_argument('--nopts', default=400, type=int, help='number of SK opts')
 
 # optimization
 parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
@@ -62,9 +62,9 @@ parser.add_argument('--batch-size', default=1024, type=int,
 
 # logging saving etc.
 parser.add_argument(
-    '--datadir', default='/home/mlelarge/data', type=str)
+    '--datadir', default='./data', type=str)
 parser.add_argument(
-    '--exp', default='/home/mlelarge/GitHub/SiMaC/expe', type=str, help='experimentdir')
+    '--exp', default='./expe', type=str, help='experimentdir')
 parser.add_argument('--type', default='10', type=int, help='cifar10 or 100')
 
 args = parser.parse_args()
