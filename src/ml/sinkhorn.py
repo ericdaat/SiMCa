@@ -150,7 +150,7 @@ class SinkhornValue(nn.Module):
         self.solver_options = solver_options
 
         # Queue params
-        self.stored_M = torch.Tensor(device=device)  # tensor acts as queue
+        self.stored_M = torch.Tensor().to(device)  # tensor acts as queue
         self.max_n_batches_in_queue = max_n_batches_in_queue
 
     def forward(self, M):
