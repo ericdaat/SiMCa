@@ -163,7 +163,7 @@ class SinkhornValue(nn.Module):
         # Compute marginals
         M_concat = torch.cat([M, self.stored_M]).to(device)
         a = torch.ones(M_concat.shape[0]).to(device)
-        b = (torch.ones(M.shape[1]) / (M.shape[0] / M.shape[1])).to(device)
+        b = (torch.ones(M_concat.shape[1]) / (M_concat.shape[0] / M_concat.shape[1])).to(device)
 
         # Compute sinkhorn
         loss = SinkhornValueFunc.apply(
