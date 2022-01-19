@@ -196,6 +196,14 @@ def train(epoch):
 
     end = time.time()
 
+    SV = SinkhornValue(
+        epsilon=0.1,
+        solver=pot_sinkhorn,
+        max_n_batches_in_queue=3,
+        # stopThr=1e-02,
+        numIterMax=100
+    )
+
     for batch_idx, (inputs, targets, indexes) in enumerate(trainloader):
         # niter = epoch * len(trainloader) + batch_idx
         # if niter * trainloader.batch_size >= optimize_times[-1]:
@@ -214,14 +222,6 @@ def train(epoch):
         outputs = model(inputs)
         # M = outputs
         # M = (outputs - np.log(inputs.shape[0])).to(device)
-
-        SV = SinkhornValue(
-            epsilon=0.1,
-            solver=pot_sinkhorn,
-            max_n_batches_in_queue=3,
-            # stopThr=1e-02,
-            numIterMax=100
-        )
 
         if args.hc == 1:
             # loss = criterion(outputs, selflabels[indexes])
