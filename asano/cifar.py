@@ -120,9 +120,9 @@ model = models.__dict__[args.arch](num_classes=numc)
 knn_dim = 4096
 
 N = len(trainloader.dataset)
-#optimize_times = ((args.epochs + 1.0001)*N*(np.linspace(0, 1, args.nopts))[::-1]).tolist()
-#optimize_times = [(args.epochs +10)*N] + optimize_times
-#print('We will optimize L at epochs:', [np.round(1.0*t/N, 2) for t in optimize_times], flush=True)
+# optimize_times = ((args.epochs + 1.0001)*N*(np.linspace(0, 1, args.nopts))[::-1]).tolist()
+# optimize_times = [(args.epochs +10)*N] + optimize_times
+# print('We will optimize L at epochs:', [np.round(1.0*t/N, 2) for t in optimize_times], flush=True)
 
 # init selflabels randomly
 if args.hc == 1:

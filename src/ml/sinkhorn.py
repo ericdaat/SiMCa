@@ -109,7 +109,7 @@ class SinkhornValueFunc(Function):
     def forward(ctx, M, stored_M, a, b, epsilon, solver, solver_options):
         # Run Sinkhorn
         P = solver(
-            torch.cat([M, stored_M]),  # Use the queue
+            torch.cat([M, stored_M]).detach(),  # Use the queue
             a,
             b,
             epsilon,
@@ -160,9 +160,10 @@ class SinkhornValue(nn.Module):
         # Sinkhorn step #
         #################
         # Compute marginals
-        M_concat = torch.cat([M, self.stored_M]).to(device)
-        a = torch.ones(M_concat.shape[0]).to(device)
-        b = (torch.ones(M_concat.shape[1]) / (M_concat.shape[0] / M_concat.shape[1])).to(device)
+        with torch.no_grad():
+            M_concat = torch.cat([M, self.stored_M]).to(device)
+            a = torch.ones(M_concat.shape[0]).to(device)
+            b = (torch.ones(M_concat.shape[1]) / (M_concat.shape[0] / M_concat.shape[1])).to(device)
 
         # Compute sinkhorn
         loss = SinkhornValueFunc.apply(
@@ -178,14 +179,15 @@ class SinkhornValue(nn.Module):
         ################
         # Update queue #
         ################
-        n_batches_in_queue = self.stored_M.shape[0] / batch_size
-        if n_batches_in_queue < self.max_n_batches_in_queue:
-            # Append current batch to previous batches
-            self.stored_M = M_concat
-        else:
-            # Roll stored M, older batch comes first, replace it with M
-            self.stored_M = torch.roll(self.stored_M, batch_size, 0)
-            self.stored_M[:batch_size, :] = M
+        with torch.no_grad():
+            n_batches_in_queue = self.stored_M.shape[0] / batch_size
+            if n_batches_in_queue < self.max_n_batches_in_queue:
+                # Append current batch to previous batches
+                self.stored_M = M_concat
+            else:
+                # Roll stored M, older batch comes first, replace it with M
+                self.stored_M = torch.roll(self.stored_M, batch_size, 0)
+                self.stored_M[:batch_size, :] = M
 
         return loss
 
