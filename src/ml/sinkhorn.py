@@ -107,15 +107,22 @@ class SinkhornLoss(nn.Module):
 class SinkhornValueFunc(Function):
     @staticmethod
     def forward(ctx, M, stored_M, a, b, epsilon, solver, solver_options):
-        # Run Sinkhorn
+        # Concat M and stored_M from the queue
+        # Note: stored_M is empty when the queue is ignored
+        #       in this case, M_concat = M
+        M_concat = torch.cat([M, stored_M])
+
+        # Run Sinkhorn on concatenation between M and queue
         P = solver(
-            torch.cat([M, stored_M]).detach(),  # Use the queue
+            M_concat.detach(),
             a,
             b,
             epsilon,
             **solver_options
         )
-        P = P[:M.shape[0], :]  # Take only current batch
+
+        # Take only P rows from current batch
+        P = P[:M.shape[0], :]
 
         ctx.save_for_backward(P)
         return (P*M).sum()
@@ -150,6 +157,7 @@ class SinkhornValue(nn.Module):
 
         # Queue params
         self.stored_M = torch.Tensor().to(device)  # tensor acts as queue
+        # Maximum number of batches to store in queue, set to 0 for no queue
         self.max_n_batches_in_queue = max_n_batches_in_queue
 
     def forward(self, M):
@@ -162,34 +170,42 @@ class SinkhornValue(nn.Module):
         # Compute marginals
         with torch.no_grad():
             M_concat = torch.cat([M, self.stored_M]).to(device)
+            # a has batch_size len
             a = torch.ones(M_concat.shape[0]).to(device)
+            # b has n_clusters len
             b = (torch.ones(M_concat.shape[1]) * (M_concat.shape[0] / M_concat.shape[1])).to(device)
 
         # Compute sinkhorn
         loss = SinkhornValueFunc.apply(
-            M,
-            self.stored_M,
-            a,
-            b,
-            self.epsilon,
-            self.solver,
-            self.solver_options
+            M,                   # current batch M
+            self.stored_M,       # M stored in queue
+            a,                   # batch size marginal
+            b,                   # cluster size marginal
+            self.epsilon,        # sinkhorn entropy
+            self.solver,         # sinkhorn solver
+            self.solver_options  # sinkhorn solver options
         )
 
+        # if queue len > 0, use the queue, otherwise don't
         if self.max_n_batches_in_queue > 0:
             ################
             # Update queue #
             ################
             with torch.no_grad():
+                # get current number of batches in queue
                 n_batches_in_queue = self.stored_M.shape[0] / batch_size
+
+                # if current n batches < max batches
                 if n_batches_in_queue < self.max_n_batches_in_queue:
                     # Append current batch to previous batches
                     self.stored_M = M_concat
                 else:
-                    # Roll stored M, older batch comes first, replace it with M
+                    # Roll stored M by a batch size
                     self.stored_M = torch.roll(self.stored_M, batch_size, 0)
+                    # Oldest batch is now first, replace it with current M
                     self.stored_M[:batch_size, :] = M
 
+        # return loss value on current M
         return loss
 
     def extra_repr(self):
