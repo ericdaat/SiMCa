@@ -201,7 +201,7 @@ def train(epoch):
         solver=pot_sinkhorn,
         max_n_batches_in_queue=3,
         # stopThr=1e-02,
-        numIterMax=100
+        numItermax=100
     )
 
     for batch_idx, (inputs, targets, indexes) in enumerate(trainloader):

@@ -7,7 +7,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def pot_sinkhorn(M, a, b, epsilon, **solver_options):
-    return ot.bregman.sinkhorn_log(
+    return ot.sinkhorn(
         a,
         b,
         M,
@@ -124,8 +124,12 @@ class SinkhornValueFunc(Function):
         # Take only P rows from current batch
         P = P[:M.shape[0], :]
 
+        log_P = P.log().clamp(min=-100)
+        H = - (P * log_P).sum()
+        value_OT = (P*M).sum() - epsilon*H
+
         ctx.save_for_backward(P)
-        return (P*M).sum()
+        return value_OT
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -139,8 +143,8 @@ class SinkhornValue(nn.Module):
     """Sinkhorn value.
 
     Returns optimal value for the regularized OT problem:
-        L(M) = max <M, P> + \epsilon H[P] s.t. \sum_j P_ij = a_i and \sum_i P_ij = b_j
-    with entropy H[P] = - \sum_ij P_ij [log(P_ij) - 1]
+        L(M) = min <M, P> - \epsilon H[P] s.t. \sum_j P_ij = a_i and \sum_i P_ij = b_j
+    with entropy H[P] = - \sum_ij P_ij log(P_ij)
 
     Args:
         epsilon (float): regularization parameter
