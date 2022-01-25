@@ -194,14 +194,12 @@ class SinkhornValue(nn.Module):
             self.solver_options  # sinkhorn solver options
         )
 
-        # if queue len > 0, use the queue, otherwise don't
-        if self.max_n_batches_in_queue > 0:
-            self.update_queue(M, M_concat, batch_size)
-
         # return loss value on current M
         return loss
 
-    def update_queue(self, M, M_concat, batch_size):
+    def update_queue(self, M):
+        batch_size = M.shape[0]
+
         # Append current batch into queue
         with torch.no_grad():
             # get current number of batches in queue
@@ -210,7 +208,7 @@ class SinkhornValue(nn.Module):
             # if current n batches < max batches
             if n_batches_in_queue < self.max_n_batches_in_queue:
                 # Append current batch to previous batches
-                self.stored_M = M_concat
+                self.stored_M = torch.cat([M, self.stored_M])
             else:
                 # Roll stored M by a batch size
                 self.stored_M = torch.roll(self.stored_M, batch_size, 0)

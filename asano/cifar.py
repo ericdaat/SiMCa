@@ -220,17 +220,18 @@ def train(epoch):
         optimizer.zero_grad()
 
         outputs = model(inputs)
-        # M = outputs
-        # M = (outputs - np.log(inputs.shape[0])).to(device)
 
         if args.hc == 1:
-            # loss = criterion(outputs, selflabels[indexes])
             loss = SV(-outputs)
         else:
-            # loss = torch.mean(torch.stack([criterion(outputs[h], selflabels[h, indexes]) for h in range(args.hc)]))
             loss = torch.mean(torch.stack(
                 [SV(-outputs[h]) for h in range(args.hc)]))
 
+        if SV.max_n_batches_in_queue > 0:
+            SV.update_queue(-outputs)
+
+        if not SV.queue_is_full:
+            continue
         loss.backward()
         optimizer.step()
 
