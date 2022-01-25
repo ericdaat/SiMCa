@@ -183,10 +183,10 @@ writer.add_text('args', " \n".join(
 
 
 # Training
-def train(epoch):
+def train(epoch, SV):
     print('\nEpoch: %d' % epoch)
     print(name)
-    #adjust_learning_rate(optimizer, epoch)
+    # adjust_learning_rate(optimizer, epoch)
     train_loss = AverageMeter()
     data_time = AverageMeter()
     batch_time = AverageMeter()
@@ -196,15 +196,10 @@ def train(epoch):
 
     end = time.time()
 
-    SV = SinkhornValue(
-        epsilon=0.1,
-        solver=pot_sinkhorn,
-        max_n_batches_in_queue=3,
-        # stopThr=1e-02,
-        numItermax=100
-    )
-
     for batch_idx, (inputs, targets, indexes) in enumerate(trainloader):
+        if inputs.shape[0] != args.batch_size:
+            print("Wrong batch size at batch {0}".format(batch_idx+1))
+            break
         # niter = epoch * len(trainloader) + batch_idx
         # if niter * trainloader.batch_size >= optimize_times[-1]:
         #     with torch.no_grad():
@@ -228,6 +223,7 @@ def train(epoch):
                 [SV(-outputs[h]) for h in range(args.hc)]))
 
         if SV.max_n_batches_in_queue > 0:
+            print("Skipping batch because queue is not full{0}".format(batch_idx))
             SV.update_queue(-outputs)
 
         if not SV.queue_is_full:
@@ -251,12 +247,24 @@ def train(epoch):
     pass
 
 
+SV = SinkhornValue(
+    epsilon=0.1,
+    solver=pot_sinkhorn,
+    max_n_batches_in_queue=4,
+    stopThr=1e-02,
+    method="sinkhorn_log",
+    # numItermax=100
+)
+
 for epoch in range(start_epoch, start_epoch + args.epochs):
-    train(epoch)
+    train(epoch, SV)
     feature_return_switch(model, True)
     acc = kNN(model, trainloader, testloader, K=10, sigma=0.1, dim=knn_dim)
     feature_return_switch(model, False)
     writer.add_scalar("accuracy kNN", acc, epoch)
+
+    continue  # TODO: remove this for saving models
+
     if acc > best_acc:
         print('Saving..')
         state = {
