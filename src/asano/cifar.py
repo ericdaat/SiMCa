@@ -161,22 +161,6 @@ knn_dim = 4096
 
 N = len(trainloader.dataset)
 
-# init selflabels randomly
-if args.hc == 1:
-    selflabels = np.zeros(N, dtype=np.int32)
-    for qq in range(N):
-        selflabels[qq] = qq % args.ncl
-    selflabels = np.random.permutation(selflabels)
-    selflabels = torch.LongTensor(selflabels).cuda()
-else:
-    selflabels = np.zeros((args.hc, N), dtype=np.int32)
-    for nh in range(args.hc):
-        for _i in range(N):
-            selflabels[nh, _i] = _i % numc[nh]
-        selflabels[nh] = np.random.permutation(selflabels[nh])
-    selflabels = torch.LongTensor(selflabels).cuda()
-
-
 optimizer = optim.SGD(
     model.parameters(),
     lr=args.lr,
@@ -319,8 +303,7 @@ for epoch in range(start_epoch, start_epoch + args.epochs):
             "net": model.state_dict(),
             "acc": acc,
             "epoch": epoch,
-            "opt": optimizer.state_dict(),
-            "L": selflabels,
+            "opt": optimizer.state_dict()
         }
         if not os.path.isdir(args.exp):
             os.mkdir(args.exp)
@@ -332,8 +315,7 @@ for epoch in range(start_epoch, start_epoch + args.epochs):
             "net": model.state_dict(),
             "opt": optimizer.state_dict(),
             "acc": acc,
-            "epoch": epoch,
-            "L": selflabels,
+            "epoch": epoch
         }
         if not os.path.isdir(args.exp):
             os.mkdir(args.exp)
