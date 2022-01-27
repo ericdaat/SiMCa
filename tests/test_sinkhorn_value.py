@@ -65,24 +65,23 @@ def test_queue_update():
         warn=True
     )
 
-    # Queue max size
-    assert sinkhorn_value.max_n_batches_in_queue == 2
+    zeros = torch.zeros([32, 128])
+    ones = torch.ones([32, 128])
 
-    # Queue is empty at first
-    assert isinstance(sinkhorn_value.stored_M, torch.Tensor)
-    assert sinkhorn_value.stored_M.shape[0] == 0
-
-    # First batch: queue has one batch
-    inputs, _ = next(iter(dataloader))
-    sinkhorn_value.update_queue(inputs)
+    # first update: append, no roll
+    sinkhorn_value.update_queue(zeros)
     assert sinkhorn_value.stored_M.shape[0] == 32
+    assert torch.all(sinkhorn_value.stored_M[:32, :] == zeros)
 
-    # Second batch: queue has two batches
-    inputs, _ = next(iter(dataloader))
-    sinkhorn_value.update_queue(inputs)
+    # second update: append, still no roll
+    sinkhorn_value.update_queue(zeros)
     assert sinkhorn_value.stored_M.shape[0] == 64
+    assert torch.all(sinkhorn_value.stored_M[:32, :] == zeros)
+    assert torch.all(sinkhorn_value.stored_M[32:64, :] == zeros)
 
-    # Third batch: queue remains at two batches
-    inputs, _ = next(iter(dataloader))
-    sinkhorn_value.update_queue(inputs)
+    # third update: roll, last batch comes first
+    sinkhorn_value.update_queue(ones)
     assert sinkhorn_value.stored_M.shape[0] == 64
+    assert sinkhorn_value.stored_M.max() == 1
+    assert torch.all(sinkhorn_value.stored_M[:32, :] == ones)
+    assert torch.all(sinkhorn_value.stored_M[32:64, :] == zeros)
