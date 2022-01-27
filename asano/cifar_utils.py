@@ -1,3 +1,5 @@
+import logging
+
 from turtle import down
 import torch
 import torchvision
@@ -134,13 +136,13 @@ def kNN(net, trainloader, testloader, K, sigma=0.1, dim=128,use_pca=False):
 
     if use_pca:
         comps = 128
-        print('doing PCA with %s components'%comps, end=' ')
+        logging.info('doing PCA with %s components'%comps, end=' ')
         from sklearn.decomposition import PCA
         pca = PCA(n_components=comps, whiten=False)
         trainFeatures = pca.fit_transform(trainFeatures.numpy().T)
         trainFeatures = torch.Tensor(trainFeatures)
         trainFeatures = normalize(trainFeatures).t()
-        print('..done')
+        logging.info('..done')
     def eval_k_s(K_,sigma_):
         total = 0
         top1 = 0.
@@ -181,7 +183,7 @@ def kNN(net, trainloader, testloader, K, sigma=0.1, dim=128,use_pca=False):
 
                 total += targets.size(0)
 
-        print(f"{K_}-NN,s={sigma_}: TOP1: ", top1 * 100. / total)
+        logging.info(f"{K_}-NN,s={sigma_}: TOP1: ", top1 * 100. / total)
         return top1 / total
 
     if isinstance(K, list):
