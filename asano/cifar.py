@@ -79,6 +79,8 @@ parser.add_argument("--epochs", default=400, type=int,
                     help="number of epochs to train")
 parser.add_argument("--batch-size", default=1024, type=int, metavar="BS",
                     help="batch size")
+parser.add_argument("--wd", default=1e-6, type=float,
+                    help="weight decay")
 
 # logging saving etc.
 parser.add_argument("--save_model", action="store_true",
@@ -178,7 +180,7 @@ optimizer = optim.SGD(
     model.parameters(),
     lr=args.lr,
     momentum=args.momentum,
-    weight_decay=5e-4
+    weight_decay=args.wd
 )
 
 model.to(device)
@@ -193,9 +195,7 @@ logging.info(name)
 
 # Training
 def train(epoch, SV):
-    print("\n--------------------------------")
     logging.info("Epoch: {0}".format(epoch))
-    print("--------------------------------\n")
 
     # adjust_learning_rate(optimizer, epoch)
     train_loss = AverageMeter()
