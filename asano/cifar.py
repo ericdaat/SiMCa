@@ -25,6 +25,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s]: %(message)s"
 )
 
+
 def feature_return_switch(model, bool=True):
     """
     switch between network output or conv5features
@@ -210,45 +211,56 @@ def train(epoch, SV):
     for batch_idx, (inputs, targets, indexes) in enumerate(trainloader):
         data_time.update(time.time() - end)
 
+        # Prepare input data
         inputs, targets, indexes = (
             inputs.to(device),
             targets.to(device),
             indexes.to(device)
         )
 
+        # Forward model
         optimizer.zero_grad()
-
         outputs = model(inputs)
 
-        if args.hc == 1:
+        # Compute loss
+        if args.hc == 1:  # single classification head
             loss = SV(-outputs)
-        else:
+        else:             # multi classification head
             loss = torch.mean(
                 torch.stack(
                     [SV(-outputs[h]) for h in range(args.hc)]
                 )
             )
 
-        # logging.debug(
-        #     "Batch {0} (Size={1}): Loss={2:.5f}".format(
-        #         batch_idx,
-        #         inputs.shape[0],
-        #         loss.item()
-        #     )
-        # )
-
-        # Use the queue
-        if SV.max_n_batches_in_queue > 0:
-            if epoch > args.queue_start_epoch:
-                logging.debug("Updating the queue")
+        # Queue section
+        if (SV.max_n_batches_in_queue > 0) \
+                and (epoch >= args.queue_start_epoch):
+            # If the queue should be used
+            if SV.queue_is_full:
+                # If the queue is full
+                # Run backward
+                loss.backward()
+                optimizer.step()
+                # And update with current batch
                 SV.update_queue(-outputs)
+            else:
+                # Otherwise, don't run backward and simply update
+                logging.warning("Queue is not full yet, skipping batch {0}"
+                                .format(batch_idx))
+                SV.update_queue(-outputs)
+                continue
+        else:
+            # Do not use the queue, run backward normally
+            loss.backward()
+            optimizer.step()
 
-                if not SV.queue_is_full:
-                    logging.debug("Queue is not full yet")
-                    continue
-
-        loss.backward()
-        optimizer.step()
+        logging.debug(
+            "Batch {0} (Size={1}): Loss={2:.5f}".format(
+                batch_idx,
+                inputs.shape[0],
+                loss.item()
+            )
+        )
 
         train_loss.update(loss.item(), inputs.size(0))
 
@@ -263,14 +275,14 @@ def train(epoch, SV):
                 "Data: {data_time.val:.3f} ({data_time.avg:.3f}) "
                 "Loss: {train_loss.val:.4f} ({train_loss.avg:.4f})"
                 .format(
-                      epoch,
-                      batch_idx,
-                      len(trainloader),
-                      batch_time=batch_time,
-                      data_time=data_time,
-                      train_loss=train_loss
-                    )
+                    epoch,
+                    batch_idx,
+                    len(trainloader),
+                    batch_time=batch_time,
+                    data_time=data_time,
+                    train_loss=train_loss
                 )
+            )
             writer.add_scalar(
                 "loss",
                 loss.item(),

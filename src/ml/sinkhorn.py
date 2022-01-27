@@ -178,11 +178,6 @@ class SinkhornValue(nn.Module):
             # b has n_clusters len
             b = (torch.ones(M_concat.shape[1]) / M_concat.shape[1]).to(device)
 
-        # check queue status
-        n_batches_in_queue = self.stored_M.shape[0] / batch_size
-        if n_batches_in_queue == self.max_n_batches_in_queue:
-            self.queue_is_full = True
-
         # Compute sinkhorn
         loss = SinkhornValueFunc.apply(
             M,                   # current batch M
@@ -214,6 +209,10 @@ class SinkhornValue(nn.Module):
                 self.stored_M = torch.roll(self.stored_M, batch_size, 0)
                 # Oldest batch is now first, replace it with current M
                 self.stored_M[:batch_size, :] = M
+
+        # update queue status
+        if self.stored_M.shape[0] / batch_size == self.max_n_batches_in_queue:
+            self.queue_is_full = True
 
     def extra_repr(self):
         return (

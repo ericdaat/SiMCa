@@ -65,6 +65,8 @@ def test_queue_update():
         warn=True
     )
 
+    assert not sinkhorn_value.queue_is_full
+
     zeros = torch.zeros([32, 128])
     ones = torch.ones([32, 128])
     twos = 2*torch.ones([32, 128])
@@ -74,21 +76,25 @@ def test_queue_update():
     sinkhorn_value.update_queue(zeros)
     assert sinkhorn_value.stored_M.shape[0] == 32
     assert torch.all(sinkhorn_value.stored_M[:32, :] == zeros)
+    assert not sinkhorn_value.queue_is_full
 
     # second update: append, still no roll
     sinkhorn_value.update_queue(ones)
     assert sinkhorn_value.stored_M.shape[0] == 64
     assert torch.all(sinkhorn_value.stored_M[:32, :] == ones)
     assert torch.all(sinkhorn_value.stored_M[32:64, :] == zeros)
+    assert sinkhorn_value.queue_is_full
 
     # third update: roll, last batch comes first
     sinkhorn_value.update_queue(twos)
     assert sinkhorn_value.stored_M.shape[0] == 64
     assert torch.all(sinkhorn_value.stored_M[:32, :] == twos)
     assert torch.all(sinkhorn_value.stored_M[32:64, :] == ones)
+    assert sinkhorn_value.queue_is_full
 
     # fourth update: roll, last batch comes first
     sinkhorn_value.update_queue(threes)
     assert sinkhorn_value.stored_M.shape[0] == 64
     assert torch.all(sinkhorn_value.stored_M[:32, :] == threes)
     assert torch.all(sinkhorn_value.stored_M[32:64, :] == twos)
+    assert sinkhorn_value.queue_is_full
