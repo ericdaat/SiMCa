@@ -53,3 +53,36 @@ def test_forward():
     loss = sinkhorn_value(inputs)
 
     assert isinstance(loss, torch.FloatTensor)
+
+
+def test_queue_update():
+    sinkhorn_value = SinkhornValue(
+        epsilon=.2,
+        solver=pot_sinkhorn,
+        max_n_batches_in_queue=2,
+        method="sinkhorn_log",
+        numItermax=100,
+        warn=True
+    )
+
+    # Queue max size
+    assert sinkhorn_value.max_n_batches_in_queue == 2
+
+    # Queue is empty at first
+    assert isinstance(sinkhorn_value.stored_M, torch.Tensor)
+    assert sinkhorn_value.stored_M.shape[0] == 0
+
+    # First batch: queue has one batch
+    inputs, _ = next(iter(dataloader))
+    sinkhorn_value.update_queue(inputs)
+    assert sinkhorn_value.stored_M.shape[0] == 32
+
+    # Second batch: queue has two batches
+    inputs, _ = next(iter(dataloader))
+    sinkhorn_value.update_queue(inputs)
+    assert sinkhorn_value.stored_M.shape[0] == 64
+
+    # Third batch: queue remains at two batches
+    inputs, _ = next(iter(dataloader))
+    sinkhorn_value.update_queue(inputs)
+    assert sinkhorn_value.stored_M.shape[0] == 64
