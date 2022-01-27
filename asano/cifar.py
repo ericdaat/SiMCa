@@ -193,7 +193,7 @@ logging.info(name)
 
 # Training
 def train(epoch, SV):
-    logging.info("\nEpoch: %d" % epoch)
+    logging.info("\nEpoch: {0}".format(epoch))
 
     # adjust_learning_rate(optimizer, epoch)
     train_loss = AverageMeter()
