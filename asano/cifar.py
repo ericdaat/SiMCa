@@ -21,7 +21,7 @@ from src.ml.sinkhorn import SinkhornValue, pot_sinkhorn
 
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s]: %(message)s"
 )
 
