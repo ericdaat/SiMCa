@@ -193,7 +193,9 @@ logging.info(name)
 
 # Training
 def train(epoch, SV):
-    logging.info("\nEpoch: {0}".format(epoch))
+    print("\n--------------------------------")
+    logging.info("Epoch: {0}".format(epoch))
+    print("--------------------------------\n")
 
     # adjust_learning_rate(optimizer, epoch)
     train_loss = AverageMeter()
@@ -227,13 +229,13 @@ def train(epoch, SV):
                 )
             )
 
-        logging.debug(
-            "Batch {0} (Size={1}): Loss={2:.5f}".format(
-                batch_idx,
-                inputs.shape[0],
-                loss.item()
-            )
-        )
+        # logging.debug(
+        #     "Batch {0} (Size={1}): Loss={2:.5f}".format(
+        #         batch_idx,
+        #         inputs.shape[0],
+        #         loss.item()
+        #     )
+        # )
 
         # Use the queue
         if SV.max_n_batches_in_queue > 0:
