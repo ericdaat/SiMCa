@@ -37,42 +37,61 @@ def feature_return_switch(model, bool=True):
 parser = argparse.ArgumentParser(
     description='PyTorch Implementation of Self-Label for CIFAR10/100')
 
-parser.add_argument('--device', default="1", type=str, help='cuda device')
+parser.add_argument('--device', default="1", type=str,
+                    help='cuda device')
 parser.add_argument('--resume', '-r', default='', type=str,
                     help='resume from checkpoint')
-parser.add_argument('--test-only', action='store_true', help='test only')
-parser.add_argument('--restart', action='store_true', help='restart opt')
+parser.add_argument('--test-only', action='store_true',
+                    help='test only')
+parser.add_argument('--restart', action='store_true',
+                    help='restart opt')
 
 # model
-parser.add_argument('--arch', default='alexnet', type=str, help='architecture')
-parser.add_argument('--ncl', default=256, type=int, help='number of clusters')
-parser.add_argument('--hc', default=10, type=int, help='number of heads')
+parser.add_argument('--arch', default='alexnet', type=str,
+                    help='architecture')
+parser.add_argument('--ncl', default=256, type=int,
+                    help='number of clusters')
+parser.add_argument('--hc', default=10, type=int,
+                    help='number of heads')
 
 # SK-optimization
-parser.add_argument('--lamb', default=10.0, type=float, help='SK lambda parameter')
-parser.add_argument('--nopts', default=400, type=int, help='number of SK opts')
+parser.add_argument('--lamb', default=10.0, type=float,
+                    help='SK lambda parameter')
+parser.add_argument('--nopts', default=400, type=int,
+                    help='number of SK opts')
+
+# Queue
+parser.add_argument('--max_queue_len', default=0, type=int,
+                    help='Maximum number of batches in queue')
 
 # optimization
-parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
-parser.add_argument('--momentum', default=0.9, type=float, help='sgd momentum')
+parser.add_argument('--lr', default=0.01, type=float,
+                    help='learning rate')
+parser.add_argument('--momentum', default=0.9, type=float,
+                    help='sgd momentum')
 parser.add_argument('--epochs', default=400, type=int,
                     help='number of epochs to train')
-parser.add_argument('--batch-size', default=1024, type=int,
-                    metavar='BS', help='batch size')
+parser.add_argument('--batch-size', default=1024, type=int, metavar='BS',
+                    help='batch size')
 
 # logging saving etc.
-parser.add_argument(
-    '--datadir', default='./data', type=str)
-parser.add_argument(
-    '--exp', default='./expe', type=str, help='experimentdir')
-parser.add_argument('--type', default='10', type=int, help='cifar10 or 100')
+parser.add_argument('--save_model', default=False, type=bool,
+                    help="Save model during training")
+parser.add_argument('--datadir', default='./data', type=str,
+                    help="datadir")
+parser.add_argument('--exp', default='./expe', type=str,
+                    help='experimentdir')
+parser.add_argument('--type', default='10', type=int,
+                    help='cifar10 or 100')
 
 args = parser.parse_args()
+
 # setup_runtime(2, [args.device])
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 knn_dim = 4096
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
+
 # Data
 print('==> Preparing data..')
 transform_train = tfs.Compose([
@@ -92,37 +111,46 @@ transform_test = tfs.Compose([
 ])
 
 if args.type == 10:
-    trainset = CIFAR10Instance(root=args.datadir, train=True, download=True,
-                               transform=transform_train)
-    trainloader = torch.utils.data.DataLoader(
-        trainset, batch_size=args.batch_size, shuffle=True, num_workers=8)
-
-    testset = CIFAR10Instance(root=args.datadir, train=False, download=True,
-                              transform=transform_test)
-    testloader = torch.utils.data.DataLoader(
-        testset, batch_size=100, shuffle=False, num_workers=2)
+    cifar_instance = CIFAR10Instance
 else:
+    cifar_instance = CIFAR100Instance
 
-    trainset = CIFAR100Instance(root=args.datadir, train=True, download=True,
-                                transform=transform_train)
-    trainloader = torch.utils.data.DataLoader(
-        trainset, batch_size=args.batch_size, shuffle=True, num_workers=8)
+trainset = cifar_instance(
+    root=args.datadir,
+    train=True,
+    download=True,
+    transform=transform_train
+)
 
-    testset = CIFAR100Instance(root=args.datadir, train=False, download=True,
-                               transform=transform_test)
-    testloader = torch.utils.data.DataLoader(
-        testset, batch_size=100, shuffle=False, num_workers=2)
+trainloader = torch.utils.data.DataLoader(
+    trainset,
+    batch_size=args.batch_size,
+    shuffle=True,
+    num_workers=8,
+    drop_last=True
+)
 
+testset = cifar_instance(
+    root=args.datadir,
+    train=False,
+    download=True,
+    transform=transform_test
+)
+
+testloader = torch.utils.data.DataLoader(
+    testset,
+    batch_size=100,
+    shuffle=False,
+    num_workers=2
+)
 
 print('==> Building model..')
+
 numc = [args.ncl] * args.hc
 model = models.__dict__[args.arch](num_classes=numc)
 knn_dim = 4096
 
 N = len(trainloader.dataset)
-# optimize_times = ((args.epochs + 1.0001)*N*(np.linspace(0, 1, args.nopts))[::-1]).tolist()
-# optimize_times = [(args.epochs +10)*N] + optimize_times
-# print('We will optimize L at epochs:', [np.round(1.0*t/N, 2) for t in optimize_times], flush=True)
 
 # init selflabels randomly
 if args.hc == 1:
@@ -140,41 +168,14 @@ else:
     selflabels = torch.LongTensor(selflabels).cuda()
 
 
-optimizer = optim.SGD(model.parameters(), lr=args.lr,
-                      momentum=args.momentum, weight_decay=5e-4)
-# Model
-if args.test_only or len(args.resume) > 0:
-    # Load checkpoint.[
-    print('==> Resuming from checkpoint..')
-    assert(os.path.isdir('%s/' % (args.exp)))
-    checkpoint = torch.load(args.resume)
-    print('loaded checkpoint at: ', checkpoint['epoch'])
-    model.load_state_dict(checkpoint['net'])
-    best_acc = checkpoint['acc']
-    start_epoch = checkpoint['epoch']
-    if 'opt' in list(checkpoint.keys()):
-        optimizer.load_state_dict(checkpoint['opt'])
-    selflabels = checkpoint['L']
-    selflabels = selflabels.to(device)
-    # include = [(qq / N >= start_epoch) for qq in optimize_times]
-    # optimize_times = (np.array(optimize_times)[include]).tolist()
-    # print('We will optimize L at epochs:', [np.round(1.0 * t / N, 2) for t in optimize_times], flush=True)
-    model.to(device)
-    # for state in optimizer.state.values():
-    #     for k, v in state.items():
-    #         if isinstance(v, torch.Tensor):
-    #             state[k] = v.cuda()
-
+optimizer = optim.SGD(
+    model.parameters(),
+    lr=args.lr,
+    momentum=args.momentum,
+    weight_decay=5e-4
+)
 
 model.to(device)
-# criterion = nn.CrossEntropyLoss()
-
-if args.test_only:
-    feature_return_switch(model, True)
-    usepca = True
-    acc = kNN(model, trainloader, testloader, K=[200, 50, 10, 5, 1], sigma=[
-              0.1, 0.5], dim=knn_dim, use_pca=usepca)
-    sys.exit(0)
 
 name = "%s" % args.exp.replace('/', '_')
 writer = SummaryWriter(f'./runs/cifar{args.type}/{name}')
@@ -186,6 +187,7 @@ writer.add_text('args', " \n".join(
 def train(epoch, SV):
     print('\nEpoch: %d' % epoch)
     print(name)
+
     # adjust_learning_rate(optimizer, epoch)
     train_loss = AverageMeter()
     data_time = AverageMeter()
@@ -197,21 +199,14 @@ def train(epoch, SV):
     end = time.time()
 
     for batch_idx, (inputs, targets, indexes) in enumerate(trainloader):
-        if inputs.shape[0] != args.batch_size:
-            print("Wrong batch size at batch {0}".format(batch_idx+1))
-            break
-        # niter = epoch * len(trainloader) + batch_idx
-        # if niter * trainloader.batch_size >= optimize_times[-1]:
-        #     with torch.no_grad():
-        #         _ = optimize_times.pop()
-        #         if args.hc >1:
-        #             feature_return_switch(model, True)
-        #         selflabels = opt_sk(model, selflabels, epoch)
-        #         if args.hc >1:
-        #             feature_return_switch(model, False)
         data_time.update(time.time() - end)
-        inputs, targets, indexes = inputs.to(
-            device), targets.to(device), indexes.to(device)
+
+        inputs, targets, indexes = (
+            inputs.to(device),
+            targets.to(device),
+            indexes.to(device)
+        )
+
         optimizer.zero_grad()
 
         outputs = model(inputs)
@@ -219,15 +214,18 @@ def train(epoch, SV):
         if args.hc == 1:
             loss = SV(-outputs)
         else:
-            loss = torch.mean(torch.stack(
-                [SV(-outputs[h]) for h in range(args.hc)]))
+            loss = torch.mean(
+                torch.stack(
+                    [SV(-outputs[h]) for h in range(args.hc)]
+                )
+            )
 
         if SV.max_n_batches_in_queue > 0:
-            print("Skipping batch because queue is not full{0}".format(batch_idx))
             SV.update_queue(-outputs)
 
         if not SV.queue_is_full:
             continue
+
         loss.backward()
         optimizer.step()
 
@@ -236,24 +234,35 @@ def train(epoch, SV):
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
+
         if batch_idx % 10 == 0:
-            print('Epoch: [{}][{}/{}]'
-                  'Time: {batch_time.val:.3f} ({batch_time.avg:.3f}) '
-                  'Data: {data_time.val:.3f} ({data_time.avg:.3f}) '
-                  'Loss: {train_loss.val:.4f} ({train_loss.avg:.4f})'.format(
-                      epoch, batch_idx, len(trainloader), batch_time=batch_time, data_time=data_time, train_loss=train_loss))
-            writer.add_scalar("loss", loss.item(), batch_idx *
-                              512 + epoch*len(trainloader.dataset))
-    pass
+            print(
+                'Epoch: [{}][{}/{}]'
+                'Time: {batch_time.val:.3f} ({batch_time.avg:.3f}) '
+                'Data: {data_time.val:.3f} ({data_time.avg:.3f}) '
+                'Loss: {train_loss.val:.4f} ({train_loss.avg:.4f})'
+                .format(
+                      epoch,
+                      batch_idx,
+                      len(trainloader),
+                      batch_time=batch_time,
+                      data_time=data_time,
+                      train_loss=train_loss)
+                )
+            writer.add_scalar(
+                "loss",
+                loss.item(),
+                batch_idx * 512 + epoch*len(trainloader.dataset)
+            )
 
 
 SV = SinkhornValue(
-    epsilon=0.1,
+    epsilon=1./args.lamb,
     solver=pot_sinkhorn,
-    max_n_batches_in_queue=4,
+    max_n_batches_in_queue=args.max_queue_len,
     stopThr=1e-02,
     method="sinkhorn_log",
-    # numItermax=100
+    numItermax=args.nopts
 )
 
 for epoch in range(start_epoch, start_epoch + args.epochs):
@@ -263,7 +272,9 @@ for epoch in range(start_epoch, start_epoch + args.epochs):
     feature_return_switch(model, False)
     writer.add_scalar("accuracy kNN", acc, epoch)
 
-    continue  # TODO: remove this for saving models
+    if not args.save_model:
+        # don't save model and continue training
+        continue
 
     if acc > best_acc:
         print('Saving..')
