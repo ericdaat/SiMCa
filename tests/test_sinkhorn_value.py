@@ -67,6 +67,8 @@ def test_queue_update():
 
     zeros = torch.zeros([32, 128])
     ones = torch.ones([32, 128])
+    twos = 2*torch.ones([32, 128])
+    threes = 3*torch.ones([32, 128])
 
     # first update: append, no roll
     sinkhorn_value.update_queue(zeros)
@@ -74,14 +76,19 @@ def test_queue_update():
     assert torch.all(sinkhorn_value.stored_M[:32, :] == zeros)
 
     # second update: append, still no roll
-    sinkhorn_value.update_queue(zeros)
+    sinkhorn_value.update_queue(ones)
     assert sinkhorn_value.stored_M.shape[0] == 64
-    assert torch.all(sinkhorn_value.stored_M[:32, :] == zeros)
+    assert torch.all(sinkhorn_value.stored_M[:32, :] == ones)
     assert torch.all(sinkhorn_value.stored_M[32:64, :] == zeros)
 
     # third update: roll, last batch comes first
-    sinkhorn_value.update_queue(ones)
+    sinkhorn_value.update_queue(twos)
     assert sinkhorn_value.stored_M.shape[0] == 64
-    assert sinkhorn_value.stored_M.max() == 1
-    assert torch.all(sinkhorn_value.stored_M[:32, :] == ones)
-    assert torch.all(sinkhorn_value.stored_M[32:64, :] == zeros)
+    assert torch.all(sinkhorn_value.stored_M[:32, :] == twos)
+    assert torch.all(sinkhorn_value.stored_M[32:64, :] == ones)
+
+    # fourth update: roll, last batch comes first
+    sinkhorn_value.update_queue(threes)
+    assert sinkhorn_value.stored_M.shape[0] == 64
+    assert torch.all(sinkhorn_value.stored_M[:32, :] == threes)
+    assert torch.all(sinkhorn_value.stored_M[32:64, :] == twos)
