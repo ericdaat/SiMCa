@@ -143,6 +143,7 @@ def kNN(net, trainloader, testloader, K, sigma=0.1, dim=128,use_pca=False):
         trainFeatures = torch.Tensor(trainFeatures)
         trainFeatures = normalize(trainFeatures).t()
         logging.info('..done')
+
     def eval_k_s(K_,sigma_):
         total = 0
         top1 = 0.
@@ -183,7 +184,10 @@ def kNN(net, trainloader, testloader, K, sigma=0.1, dim=128,use_pca=False):
 
                 total += targets.size(0)
 
-        logging.info(f"{K_}-NN,s={sigma_}: TOP1: ", top1 * 100. / total)
+        logging.info(
+            f"{K_}-NN, s={sigma_}: TOP1: {0:.3f}".format(top1 * 100. / total)
+        )
+
         return top1 / total
 
     if isinstance(K, list):

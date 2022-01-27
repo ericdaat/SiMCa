@@ -218,5 +218,5 @@ class SinkhornValue(nn.Module):
     def extra_repr(self):
         return (
             f"epsilon={self.epsilon:.2e}, solver={self.solver},"
-            "solver_options={self.solver_options}"
+            f"solver_options={self.solver_options}"
         )
