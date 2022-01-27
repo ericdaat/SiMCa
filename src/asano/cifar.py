@@ -285,6 +285,12 @@ SV = SinkhornValue(
 
 logging.info(SV)
 
+# Compute accuracy before training the model
+feature_return_switch(model, True)
+acc = kNN(model, trainloader, testloader, K=10, sigma=0.1, dim=knn_dim)
+feature_return_switch(model, False)
+
+# Training epochs
 for epoch in range(start_epoch, start_epoch + args.epochs):
     train(epoch, SV)
     feature_return_switch(model, True)
@@ -294,7 +300,7 @@ for epoch in range(start_epoch, start_epoch + args.epochs):
 
     if not args.save_model:
         logging.debug("Skipping save model")
-        # don"t save model and continue training
+        # Don't save model and continue training
         continue
 
     if acc > best_acc:
