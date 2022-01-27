@@ -1,25 +1,29 @@
-'''Train CIFAR10 with PyTorch.
+"""Train CIFAR10 with PyTorch.
 mostly from  https://github.com/zhirongw/lemniscate.pytorch/blob/master/cifar.py, AET
-'''
+"""
 from __future__ import print_function
 
-import sys
 import os
 import argparse
 import time
+import logging
 
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as tfs
 from tensorboardX import SummaryWriter
 
 from asano import models
-from asano.util import AverageMeter, setup_runtime, py_softmax
+from asano.util import AverageMeter
 from asano.cifar_utils import kNN, CIFAR10Instance, CIFAR100Instance
-from src.ml.sinkhorn import SinkhornValue, sinkhorn, pot_sinkhorn
+from src.ml.sinkhorn import SinkhornValue, pot_sinkhorn
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s]: %(message)s"
+)
 
 def feature_return_switch(model, bool=True):
     """
@@ -35,65 +39,67 @@ def feature_return_switch(model, bool=True):
 
 
 parser = argparse.ArgumentParser(
-    description='PyTorch Implementation of Self-Label for CIFAR10/100')
+    description="PyTorch Implementation of Self-Label for CIFAR10/100")
 
-parser.add_argument('--device', default="1", type=str,
-                    help='cuda device')
-parser.add_argument('--resume', '-r', default='', type=str,
-                    help='resume from checkpoint')
-parser.add_argument('--test-only', action='store_true',
-                    help='test only')
-parser.add_argument('--restart', action='store_true',
-                    help='restart opt')
+parser.add_argument("--device", default="1", type=str,
+                    help="cuda device")
+parser.add_argument("--resume", "-r", default="", type=str,
+                    help="resume from checkpoint")
+parser.add_argument("--test-only", action="store_true",
+                    help="test only")
+parser.add_argument("--restart", action="store_true",
+                    help="restart opt")
 
 # model
-parser.add_argument('--arch', default='alexnet', type=str,
-                    help='architecture')
-parser.add_argument('--ncl', default=256, type=int,
-                    help='number of clusters')
-parser.add_argument('--hc', default=10, type=int,
-                    help='number of heads')
+parser.add_argument("--arch", default="alexnet", type=str,
+                    help="architecture")
+parser.add_argument("--ncl", default=256, type=int,
+                    help="number of clusters")
+parser.add_argument("--hc", default=10, type=int,
+                    help="number of heads")
 
 # SK-optimization
-parser.add_argument('--lamb', default=10.0, type=float,
-                    help='SK lambda parameter')
-parser.add_argument('--nopts', default=400, type=int,
-                    help='number of SK opts')
+parser.add_argument("--lamb", default=10.0, type=float,
+                    help="SK lambda parameter")
+parser.add_argument("--nopts", default=400, type=int,
+                    help="number of SK opts")
 
 # Queue
-parser.add_argument('--max_queue_len', default=0, type=int,
-                    help='Maximum number of batches in queue')
+parser.add_argument("--max_queue_len", default=0, type=int,
+                    help="Maximum number of batches in queue")
+parser.add_argument("--queue_start_epoch", default=10, type=int,
+                    help="Queue will start at this epoch, if enabled")
 
 # optimization
-parser.add_argument('--lr', default=0.01, type=float,
-                    help='learning rate')
-parser.add_argument('--momentum', default=0.9, type=float,
-                    help='sgd momentum')
-parser.add_argument('--epochs', default=400, type=int,
-                    help='number of epochs to train')
-parser.add_argument('--batch-size', default=1024, type=int, metavar='BS',
-                    help='batch size')
+parser.add_argument("--lr", default=0.01, type=float,
+                    help="learning rate")
+parser.add_argument("--momentum", default=0.9, type=float,
+                    help="sgd momentum")
+parser.add_argument("--epochs", default=400, type=int,
+                    help="number of epochs to train")
+parser.add_argument("--batch-size", default=1024, type=int, metavar="BS",
+                    help="batch size")
 
 # logging saving etc.
-parser.add_argument('--save_model', default=False, type=bool,
+parser.add_argument("--save_model", action="store_true",
                     help="Save model during training")
-parser.add_argument('--datadir', default='./data', type=str,
+parser.add_argument("--datadir", default="./data", type=str,
                     help="datadir")
-parser.add_argument('--exp', default='./expe', type=str,
-                    help='experimentdir')
-parser.add_argument('--type', default='10', type=int,
-                    help='cifar10 or 100')
+parser.add_argument("--exp", default="./expe", type=str,
+                    help="experimentdir")
+parser.add_argument("--type", default="10", type=int,
+                    help="cifar10 or 100")
 
 args = parser.parse_args()
 
 # setup_runtime(2, [args.device])
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 knn_dim = 4096
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 # Data
-print('==> Preparing data..')
+logging.info("==> Preparing data..")
 transform_train = tfs.Compose([
     tfs.Resize(256),
     tfs.RandomResizedCrop(size=224, scale=(0.2, 1.)),
@@ -144,7 +150,7 @@ testloader = torch.utils.data.DataLoader(
     num_workers=2
 )
 
-print('==> Building model..')
+logging.info("==> Building model..")
 
 numc = [args.ncl] * args.hc
 model = models.__dict__[args.arch](num_classes=numc)
@@ -177,16 +183,16 @@ optimizer = optim.SGD(
 
 model.to(device)
 
-name = "%s" % args.exp.replace('/', '_')
-writer = SummaryWriter(f'./runs/cifar{args.type}/{name}')
-writer.add_text('args', " \n".join(
-    ['%s %s' % (arg, getattr(args, arg)) for arg in vars(args)]))
+name = "%s" % args.exp.replace("/", "_")
+writer = SummaryWriter(f"./runs/cifar{args.type}/{name}")
+writer.add_text("args", " \n".join(
+    ["%s %s" % (arg, getattr(args, arg)) for arg in vars(args)]))
 
 
 # Training
 def train(epoch, SV):
-    print('\nEpoch: %d' % epoch)
-    print(name)
+    logging.info("\nEpoch: %d" % epoch)
+    logging.info(name)
 
     # adjust_learning_rate(optimizer, epoch)
     train_loss = AverageMeter()
@@ -220,11 +226,19 @@ def train(epoch, SV):
                 )
             )
 
-        if SV.max_n_batches_in_queue > 0:
-            SV.update_queue(-outputs)
+        logging.debug(
+            "Batch {0}: Loss={1:.5f}".format(batch_idx, loss.item())
+        )
 
-        if not SV.queue_is_full:
-            continue
+        # Use the queue
+        if SV.max_n_batches_in_queue > 0:
+            if epoch > args.queue_start_epoch:
+                logging.debug("Updating the queue")
+                SV.update_queue(-outputs)
+
+                if not SV.queue_is_full:
+                    logging.debug("Queue is not full yet")
+                    continue
 
         loss.backward()
         optimizer.step()
@@ -236,11 +250,11 @@ def train(epoch, SV):
         end = time.time()
 
         if batch_idx % 10 == 0:
-            print(
-                'Epoch: [{}][{}/{}]'
-                'Time: {batch_time.val:.3f} ({batch_time.avg:.3f}) '
-                'Data: {data_time.val:.3f} ({data_time.avg:.3f}) '
-                'Loss: {train_loss.val:.4f} ({train_loss.avg:.4f})'
+            logging.info(
+                "Epoch: [{}][{}/{}]"
+                "Time: {batch_time.val:.3f} ({batch_time.avg:.3f}) "
+                "Data: {data_time.val:.3f} ({data_time.avg:.3f}) "
+                "Loss: {train_loss.val:.4f} ({train_loss.avg:.4f})"
                 .format(
                       epoch,
                       batch_idx,
@@ -273,34 +287,35 @@ for epoch in range(start_epoch, start_epoch + args.epochs):
     writer.add_scalar("accuracy kNN", acc, epoch)
 
     if not args.save_model:
-        # don't save model and continue training
+        logging.debug("Skipping save model")
+        # don"t save model and continue training
         continue
 
     if acc > best_acc:
-        print('Saving..')
+        logging.info("Saving..")
         state = {
-            'net': model.state_dict(),
-            'acc': acc,
-            'epoch': epoch,
-            'opt': optimizer.state_dict(),
-            'L': selflabels,
+            "net": model.state_dict(),
+            "acc": acc,
+            "epoch": epoch,
+            "opt": optimizer.state_dict(),
+            "L": selflabels,
         }
         if not os.path.isdir(args.exp):
             os.mkdir(args.exp)
-        torch.save(state, '%s/best_ckpt.t7' % (args.exp))
+        torch.save(state, "%s/best_ckpt.t7" % (args.exp))
         best_acc = acc
     if epoch % 100 == 0:
-        print('Saving..')
+        logging.info("Saving..")
         state = {
-            'net': model.state_dict(),
-            'opt': optimizer.state_dict(),
-            'acc': acc,
-            'epoch': epoch,
-            'L': selflabels,
+            "net": model.state_dict(),
+            "opt": optimizer.state_dict(),
+            "acc": acc,
+            "epoch": epoch,
+            "L": selflabels,
         }
         if not os.path.isdir(args.exp):
             os.mkdir(args.exp)
-        torch.save(state, '%s/ep%s.t7' % (args.exp, epoch))
+        torch.save(state, "%s/ep%s.t7" % (args.exp, epoch))
     if epoch % 50 == 0:
         feature_return_switch(model, True)
         acc = kNN(model, trainloader, testloader, K=[50, 10],
@@ -308,13 +323,13 @@ for epoch in range(start_epoch, start_epoch + args.epochs):
         i = 0
         for num_nn in [50, 10]:
             for sig in [0.1, 0.5]:
-                writer.add_scalar('knn%s-%s' % (num_nn, sig), acc[i], epoch)
+                writer.add_scalar("knn%s-%s" % (num_nn, sig), acc[i], epoch)
                 i += 1
         feature_return_switch(model, False)
-    print('best accuracy: {:.2f}'.format(best_acc * 100))
+    logging.info("best accuracy: {:.2f}".format(best_acc * 100))
 
-checkpoint = torch.load('%s' % args.exp+'/best_ckpt.t7')
-model.load_state_dict(checkpoint['net'])
+checkpoint = torch.load("%s" % args.exp+"/best_ckpt.t7")
+model.load_state_dict(checkpoint["net"])
 feature_return_switch(model, True)
 acc = kNN(model, trainloader, testloader, K=10,
           sigma=0.1, dim=knn_dim, use_pca=True)
