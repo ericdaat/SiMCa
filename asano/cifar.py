@@ -292,7 +292,7 @@ for epoch in range(start_epoch, start_epoch + args.epochs):
     feature_return_switch(model, True)
     acc = kNN(model, trainloader, testloader, K=10, sigma=0.1, dim=knn_dim)
     feature_return_switch(model, False)
-    writer.add_scalar("accuracy kNN", acc, epoch)
+    writer.add_scalar("accuracy_kNN", acc, epoch)
 
     if not args.save_model:
         logging.debug("Skipping save model")

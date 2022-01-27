@@ -185,7 +185,8 @@ def kNN(net, trainloader, testloader, K, sigma=0.1, dim=128,use_pca=False):
                 total += targets.size(0)
 
         logging.info(
-            f"{K_}-NN, s={sigma_}: TOP1: {0:.3f}".format(top1 * 100. / total)
+            f"{0}-NN, s={1}: TOP1:{2}"
+            .format(K_, sigma_, top1 * 100. / total)
         )
 
         return top1 / total
