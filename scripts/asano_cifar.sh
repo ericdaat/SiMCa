@@ -20,7 +20,7 @@ folder=cifar${type}/${arch}-K${ncl}_lr${lr}_bs${bs}_hc${hc}_nopt${nopts}_n${epoc
 EXP=${folder}
 mkdir -p ${EXP}
 
-python3 asano/cifar.py \
+python3 src/asano/cifar.py \
   --arch ${arch} \
   --device ${device} \
   --exp ${EXP} \

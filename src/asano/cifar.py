@@ -14,14 +14,14 @@ import torch.optim as optim
 import torchvision.transforms as tfs
 from tensorboardX import SummaryWriter
 
-from asano import models
-from asano.util import AverageMeter
-from asano.cifar_utils import kNN, CIFAR10Instance, CIFAR100Instance
+from src.asano import models
+from src.asano.util import AverageMeter
+from src.asano.cifar_utils import kNN, CIFAR10Instance, CIFAR100Instance
 from src.ml.sinkhorn import SinkhornValue, pot_sinkhorn
 
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s]: %(message)s"
 )
 
