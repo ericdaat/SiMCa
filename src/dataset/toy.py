@@ -20,6 +20,7 @@ def load_dataset(filepath):
 
     return toy
 
+
 class ToyDataset(object):
     def __init__(self, n_users, n_items, n_centers, n_features,
                  distance_weight):
@@ -87,8 +88,8 @@ class ToyDataset(object):
         (users_x, users_y, items_x, items_y, items_capacities,
          D, users_features, items_features,
          assigned_item_for_user) =\
-                self.__generate(n_users, n_items, n_centers,
-                                n_features, distance_weight)
+            self.__generate(n_users, n_items, n_centers,
+                            n_features, distance_weight)
 
         # Update setup variables
         self.n_users = n_users
@@ -212,7 +213,6 @@ class ToyDataset(object):
             assigned_item_for_user
         )
 
-
     def __generate_users_and_items_coordinates(self, n_users, n_items):
         """Generate users and items coordinates.
 
@@ -254,7 +254,6 @@ class ToyDataset(object):
 
         return users_x, users_y, items_x, items_y, items_capacities
 
-
     def __compute_travel_distance(self, users_x, users_y, items_x, items_y):
         """Compute the distance matrix between users and items, using
         circle distance.
@@ -286,7 +285,6 @@ class ToyDataset(object):
                 D[i][j] = d_ij
 
         return D
-
 
     def __generate_users_and_items_features(self, n_users, n_items,
                                            n_centers, n_features,
@@ -333,7 +331,6 @@ class ToyDataset(object):
             items_features /= np.linalg.norm(items_features, axis=1).reshape(-1, 1)
 
         return users_features, items_features
-
 
     def __assign_users_to_items(self, users_features, items_features, D,
                                items_capacities, distance_weight):
