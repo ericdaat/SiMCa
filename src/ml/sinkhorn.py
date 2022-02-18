@@ -181,7 +181,7 @@ class SinkhornValue(nn.Module):
             a = (torch.ones(M_concat.shape[0]) / M_concat.shape[0]).to(device)
             # b has n_clusters len
             if self.proportions.shape[0] > 0:
-                b = self.proportions
+                b = self.proportions.to(device)
             else:
                 b = (torch.ones(M_concat.shape[1]) / M_concat.shape[1]).to(device)
 
