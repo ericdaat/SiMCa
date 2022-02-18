@@ -150,7 +150,7 @@ class SinkhornValue(nn.Module):
         solver_kwargs (int): options to pass to the solver
     """
     def __init__(self, epsilon, max_n_batches_in_queue, solver,
-                 **solver_options):
+                 proportions=[], **solver_options):
         super().__init__()
         # Sinkhorn params
         self.epsilon = epsilon
@@ -162,6 +162,10 @@ class SinkhornValue(nn.Module):
         # Maximum number of batches to store in queue, set to 0 for no queue
         self.max_n_batches_in_queue = max_n_batches_in_queue
         self.queue_is_full = False
+
+        # Capacities
+        self.proportions = torch.FloatTensor(proportions)
+
 
     def forward(self, M):
         batch_size = M.shape[0]
@@ -176,7 +180,10 @@ class SinkhornValue(nn.Module):
             # a has batch_size len
             a = (torch.ones(M_concat.shape[0]) / M_concat.shape[0]).to(device)
             # b has n_clusters len
-            b = (torch.ones(M_concat.shape[1]) / M_concat.shape[1]).to(device)
+            if self.proportions.shape[0] > 0:
+                b = self.proportions
+            else:
+                b = (torch.ones(M_concat.shape[1]) / M_concat.shape[1]).to(device)
 
         # Compute sinkhorn
         loss = SinkhornValueFunc.apply(
