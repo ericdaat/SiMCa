@@ -1,6 +1,6 @@
-*.pyc
 .ipynb_checkpoints
-venv
 .vscode
+*.pyc
+venv
 data
 figures

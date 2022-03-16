@@ -45,7 +45,7 @@ The resulting dataset might look like this:
 Train the model using the [simca.py](./simca.py) script:
 
 ``` bash
-python simca.py
+PYTHONPATH="." python simca.py
 ```
 
 The script takes the following parameters:
