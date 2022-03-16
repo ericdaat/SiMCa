@@ -5,7 +5,7 @@ from torch import nn
 
 sns.set(style="whitegrid", palette="Set2")
 
-CENTERS_COLORS = [
+ITEMS_COLORS = [
 	"#D3F8E2",
 	"#E4C1F9",
 	"#F694C1",
@@ -34,9 +34,9 @@ def plot_embeddings(users_features,
         dim=1
     ).data.numpy()
 
-    # Plot patients
+    # Plot users
     if y_pred is not None:
-        colors = [CENTERS_COLORS[i] for i in y_pred]
+        colors = [ITEMS_COLORS[i] for i in y_pred]
     else:
         colors = "black"
 
@@ -52,7 +52,7 @@ def plot_embeddings(users_features,
     ax.scatter(
         x=items_features[:, 0],
         y=items_features[:, 1],
-        c=CENTERS_COLORS[:items_capacities.shape[1]],
+        c=ITEMS_COLORS[:items_capacities.shape[1]],
         s=items_capacities,
         alpha=.7,
         marker="o",
@@ -79,19 +79,19 @@ def plot_distances(users_xy, items_xy, radius, y_pred,
     x2 = np.sin(theta) * radius
     ax.plot(x1, x2, linewidth=.5, color="grey")
 
-    # Draw "care centers"
+    # Draw items
     ax.scatter(
         items_xy[:, 0],
         items_xy[:, 1],
         s=2*items_capacities,
         alpha=.7,
         label="care center",
-        c=CENTERS_COLORS[:items_capacities.shape[1]],
+        c=ITEMS_COLORS[:items_capacities.shape[1]],
         edgecolors="black"
     )
 
     if y_pred is not None:
-        colors = [CENTERS_COLORS[i] for i in y_pred]
+        colors = [ITEMS_COLORS[i] for i in y_pred]
     else:
         colors = "black"
     ax.scatter(
@@ -102,17 +102,6 @@ def plot_distances(users_xy, items_xy, radius, y_pred,
         color=colors,
         s=30
     )
-
-    # Draw links
-    # if y_pred is not None:
-    #     for i, j in enumerate(y_pred):
-    #         ax.plot(
-    #             [users_xy[i, 0], items_xy[j, 0]],
-    #             [users_xy[i, 1], items_xy[j, 1]],
-    #             color=CENTERS_COLORS[j],
-    #             linewidth=.3,
-    #             zorder=-1,
-    #         )
 
     ax.grid(False)
     ax.set_aspect("equal")
