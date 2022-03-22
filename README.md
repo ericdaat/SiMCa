@@ -8,6 +8,8 @@
 1. INRIA, DI/ENS, Paris, France
 2. Institut Curie, Paris, France
 
+This repository contains the code for our paper available on arXiv: https://arxiv.org/abs/2203.10107.
+
 ## Abstract
 
 For a very broad range of problems, recommendation algorithms have been increasingly used over the past decade. In most of these algorithms, the predictions are built upon user-item affinity scores which are obtained from  high-dimensional embeddings of items and users. In more complex scenarios, with geometrical or capacity constraints, prediction based on embeddings may not be sufficient and some additional features should be considered in the design of the algorithm.
